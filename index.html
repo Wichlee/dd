@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stochastic Parrots | How Big Is Too Big?</title>
+  <meta name="description" content="An interactive scrollytelling about the dangers of ever larger language models, based on Bender, Gebru et al. (2021), 'On the Dangers of Stochastic Parrots'.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Newsreader:opsz@6..72&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">An interactive story based on the FAccT '21 paper<br>by Bender, Gebru, McMillan-Major &amp; Shmitchell</p>
+      <h1>Stochastic Parrots</h1>
+      <p class="subtitle">Language models have become shockingly good at sounding human.<br>But can they really <em>think</em> — and at what cost do they get so big?</p>
+      <p class="scroll-cue">scroll to begin ↓</p>
+    </div>
+  </header>
+
+  <!-- ============ SCROLLYTELLING ============ -->
+  <main id="story">
+
+    <!-- Sticky chart stage (shared across chapters) -->
+    <div id="chart-stage">
+      <div id="chart"></div>
+      <div id="tooltip" class="tooltip"></div>
+    </div>
+
+    <!-- Chapters -->
+    <div id="chapters">
+
+      <section class="chapter">
+        <div class="chapter-content">
+          <h2>The parrot that fools everyone</h2>
+          <p>Meet the <strong>stochastic parrot</strong> — a machine that stitches together words and sentences it has memorised, <em>fluently</em> and <em>confidently</em>, but without any grasp of what it is saying.</p>
+          <p>It sounds human. It is not thinking.</p>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="chapter-content">
+          <h2>2&nbsp;years. 4,600× bigger.</h2>
+          <p>Between 2019 and 2021, English language models grew at a staggering pace — in both <strong>parameters</strong> (how "big" the model is) and the <strong>amount of text</strong> they were trained on.</p>
+          <p>From BERT (340 million parameters) to GPT-3 (175 billion) to Switch-C (1.6 trillion), the field was in a literal arms race.</p>
+          <p class="hint">The chart below uses a <em>logarithmic</em> scale — otherwise GPT-3 and Switch-C would tower so high they'd drown out everything else. That oversized leap <em>is</em> the story.</p>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="chapter-content">
+          <h2>How big is "too big"?</h2>
+          <p>Each bubble is a model. Its size shows parameter count; its colour shows how much training text it used.</p>
+          <p>Watch the timeline advance: model after model, the bubbles inflate — while the datasets behind them swell too.</p>
+          <p class="hint">For comparison, the average human brain has roughly 86&nbsp;billion neurons. GPT-3 alone has twice that many parameters.</p>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="chapter-content">
+          <h2>The hidden price tag</h2>
+          <p>That runaway growth doesn't come cheap.</p>
+          <p>Training a single large model can emit as much CO₂ as <strong>an entire lifetime's worth of emissions for ~57 people</strong> — and training one BERT uses as much energy as <strong>a trans-Atlantic flight</strong>.</p>
+          <p class="hint">Efficiency improvements grow far more slowly than model sizes. Bigger models = disproportionately bigger bills.</p>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="chapter-content">
+          <h2>Scoring higher, spending more</h2>
+          <p>Even the performance gains are expensive. In machine translation, pushing a model just a tiny bit further — gains of <strong>0.1 BLEU</strong> on a score that runs to 100 — can cost around <strong>$150,000</strong> in compute.</p>
+          <p>That is a lot of electricity for a nearly imperceptible improvement.</p>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="chapter-content">
+          <h2>But wait — what's inside?</h2>
+          <p>Big models need big data. So developers scrape the <em>entire internet</em>. And the internet is not the world.</p>
+          <p>If you train on everything on the web, you also swallow its <strong>biases</strong>: whose voices are there, and whose are missing?</p>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="chapter-content">
+          <h2>The one-sided internet</h2>
+          <p>The people who shape the data are overwhelmingly not representative of humanity.</p>
+          <p>Reddit is dominated by young men. Wikipedia's editors are mostly men. So the "world" a language model learns is skewed from the start.</p>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="chapter-content">
+          <h2>Filtered silence</h2>
+          <p>Filters may screen out hateful words — but they also wash away <em>marginalised communities</em>.</p>
+          <p>A "bad words" list used to clean web data overwhelmingly flags sexual language, deleting words like <em>"twink"</em> — and with it, the voice of LGBTQ+ spaces that use that language.</p>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="chapter-content">
+          <h2>So fluent. So hollow.</h2>
+          <p>Even with all this data, the parrot doesn't understand. It predicts the next likely word — nothing more.</p>
+          <p>When it produces text that looks coherent, we humans are the ones supplying the meaning. That is exactly what makes it dangerous.</p>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="chapter-content">
+          <h2>What can we do?</h2>
+          <p>The researchers' verdict: don't just scale up bigger and bigger. <strong>Curation beats consumption</strong> — curate smaller, documented datasets rather than swallowing the whole internet blindly.</p>
+          <p>And measure success not only by accuracy, but by <em>cost</em> and <em>efficiency</em>.</p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ============ OUTRO ============ -->
+  <footer class="outro">
+    <div class="outro-inner">
+      <h2>Stochastic Parrots</h2>
+      <p>is a student visualisation of the research paper</p>
+      <p class="cite"><em>Bender, E. M., Gebru, T., McMillan-Major, A., &amp; Shmitchell, S. (2021). On the Dangers of Stochastic Parrots: Can Language Models Be Too Big? Proceedings of the 2021 ACM Conference on Fairness, Accountability, and Transparency (FAccT '21), 610–623.</em></p>
+      <p class="disclaimer">Made for a Digital Democracy seminar. A general-audience retelling — for the full academic argument, see the original paper.</p>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

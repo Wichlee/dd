@@ -1,0 +1,5 @@
+# Source PDFs (the research paper + lecture slides) are not part of the site
+*.pdf
+
+# KIT GitLab pipeline not needed (we deploy via GitHub Pages)
+.gitlab-ci.yml
