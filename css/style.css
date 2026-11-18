@@ -187,16 +187,6 @@ h1, h2 {
 .tooltip strong { color: var(--accent); display: block; }
 .tooltip .tt-sub { color: var(--muted); }
 
-/* Parrot idle sway (CSS transform-origin is the char center; D3 drives the hop) */
-.parrot-sway {
-  transform-origin: 0px 0px;
-  animation: parrot-sway 3.2s ease-in-out infinite;
-}
-@keyframes parrot-sway {
-  0%, 100% { transform: rotate(-2.5deg); }
-  50%      { transform: rotate(2.5deg); }
-}
-
 /* ---------- RESPONSIVE ---------- */
 @media (max-width: 760px) {
   #chart-stage { height: 60vh; }
