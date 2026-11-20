@@ -12,115 +12,177 @@
 </head>
 <body>
 
-  <!-- ============ HERO ============ -->
+  <!-- ================= HERO ================= -->
+  <!-- @Erik -->
   <header class="hero">
     <div class="hero-inner">
       <p class="eyebrow">An interactive story based on the FAccT '21 paper<br>by Bender, Gebru, McMillan-Major &amp; Shmitchell</p>
       <h1>Stochastic Parrots</h1>
-      <p class="subtitle">Language models have become shockingly good at sounding human.<br>But can they really <em>think</em> — and at what cost do they get so big?</p>
+      <p class="subtitle">Language models sound shockingly human.<br>But do they <em>understand</em> a single word — and what does their sheer size cost us?</p>
       <p class="scroll-cue">scroll to begin ↓</p>
     </div>
   </header>
 
-  <!-- ============ SCROLLYTELLING ============ -->
   <main id="story">
 
-    <!-- Sticky chart stage (shared across chapters) -->
+    <!-- Sticky chart stage (shared across all chapters) -->
     <div id="chart-stage">
       <div id="chart"></div>
       <div id="tooltip" class="tooltip"></div>
     </div>
 
-    <!-- Chapters -->
     <div id="chapters">
 
+      <!-- ================================================== -->
+      <!-- HERO / SCALE  ·  owner: @Erik                      -->
+      <!-- ================================================== -->
       <section class="chapter">
         <div class="chapter-content">
-          <h2>The parrot that fools everyone</h2>
-          <p>Meet the <strong>stochastic parrot</strong> — a machine that stitches together words and sentences it has memorised, <em>fluently</em> and <em>confidently</em>, but without any grasp of what it is saying.</p>
-          <p>It sounds human. It is not thinking.</p>
+          <h2>The great AI size race</h2>
+          <p>Since 2018, AI research has been locked in a race to build <strong>ever larger language models</strong> — systems trained to predict the next word in a sequence.</p>
+          <p>Each bubble is a real model. Its size: how many <strong>parameters</strong> it has. Watch what happens in just three years.</p>
         </div>
       </section>
 
       <section class="chapter">
         <div class="chapter-content">
-          <h2>2&nbsp;years. 4,600× bigger.</h2>
-          <p>Between 2019 and 2021, English language models grew at a staggering pace — in both <strong>parameters</strong> (how "big" the model is) and the <strong>amount of text</strong> they were trained on.</p>
-          <p>From BERT (340 million parameters) to GPT-3 (175 billion) to Switch-C (1.6 trillion), the field was in a literal arms race.</p>
-          <p class="hint">The chart below uses a <em>logarithmic</em> scale — otherwise GPT-3 and Switch-C would tower so high they'd drown out everything else. That oversized leap <em>is</em> the story.</p>
+          <h2>4,600× in two years</h2>
+          <p>From BERT (340 million parameters) to GPT-3 (175&nbsp;billion) to Switch-C (1.6&nbsp;<strong>trillion</strong>).</p>
+          <p>For scale: the human brain has roughly 86&nbsp;billion neurons. GPT-3 alone has <strong>twice</strong> that many parameters.</p>
+          <p class="hint">The chart uses a logarithmic scale — otherwise Switch-C would tower so high it would drown out everything else. That explosive leap <em>is</em> the story.</p>
+        </div>
+      </section>
+
+      <!-- ================================================== -->
+      <!-- SECTION 1 · THE STOCHASTIC PARROT  ·  owner: @Erik -->
+      <!-- ================================================== -->
+      <section class="chapter">
+        <div class="chapter-content">
+          <h2>Meet the stochastic parrot</h2>
+          <p>Here is the uncomfortable truth: these models do not know what words <em>mean</em>. They have no intent, no thoughts, no grasp of the world.</p>
+          <p>They are, in the authors' words, <strong>stochastic parrots</strong>: they haphazardly stitch together sequences of words based on <em>statistical probabilities</em> learned from training data.</p>
+          <p>Nothing more.</p>
         </div>
       </section>
 
       <section class="chapter">
         <div class="chapter-content">
-          <h2>How big is "too big"?</h2>
-          <p>Each bubble is a model. Its size shows parameter count; its colour shows how much training text it used.</p>
-          <p>Watch the timeline advance: model after model, the bubbles inflate — while the datasets behind them swell too.</p>
-          <p class="hint">For comparison, the average human brain has roughly 86&nbsp;billion neurons. GPT-3 alone has twice that many parameters.</p>
+          <h2>Try it yourself</h2>
+          <p>On the right, the parrot is completing a sentence the only way it can: by guessing the <strong>most probable next word</strong>.</p>
+          <p><strong>Click a candidate</strong> to accept it — and watch it pick the next one. It never chooses because a word is <em>true</em>, only because it is <em>likely</em>.</p>
+          <p class="hint">Probabilities are illustrative, not measured from the paper.</p>
         </div>
       </section>
 
+      <section class="chapter">
+        <div class="chapter-content">
+          <h2>The illusion of meaning</h2>
+          <p>So why does it <em>feel</em> like the machine understands? Because <strong>you</strong> supply the meaning.</p>
+          <p>Humans are built to read intent into fluent language. The coherence is real — but it exists only in <strong>your head</strong>, not in the model.</p>
+          <p>That gap is where the dangers of this technology begin.</p>
+        </div>
+      </section>
+
+      <!-- ================================================== -->
+      <!-- SECTION 2 · ENVIRONMENTAL COSTS  ·  owner: @Leo    -->
+      <!-- TODO(Leo): refine texts, tune co2Chart/computeChart -->
+      <!-- ================================================== -->
       <section class="chapter">
         <div class="chapter-content">
           <h2>The hidden price tag</h2>
-          <p>That runaway growth doesn't come cheap.</p>
-          <p>Training a single large model can emit as much CO₂ as <strong>an entire lifetime's worth of emissions for ~57 people</strong> — and training one BERT uses as much energy as <strong>a trans-Atlantic flight</strong>.</p>
-          <p class="hint">Efficiency improvements grow far more slowly than model sizes. Bigger models = disproportionately bigger bills.</p>
+          <p>All that size doesn't come free — it is paid for in <strong>electricity and CO₂</strong>.</p>
+          <p>Training one large model can emit <strong>284 tonnes of CO₂</strong> — roughly what an average person emits over <strong>57 years</strong>. Training a single BERT model takes about as much energy as a trans-American flight.</p>
+          <!-- TODO(Leo): CO2 comparator interaction -->
         </div>
       </section>
 
       <section class="chapter">
         <div class="chapter-content">
           <h2>Scoring higher, spending more</h2>
-          <p>Even the performance gains are expensive. In machine translation, pushing a model just a tiny bit further — gains of <strong>0.1 BLEU</strong> on a score that runs to 100 — can cost around <strong>$150,000</strong> in compute.</p>
-          <p>That is a lot of electricity for a nearly imperceptible improvement.</p>
+          <p>The compute used to train the biggest AI models grew <strong>300,000× in six years</strong> — far outpacing Moore's law.</p>
+          <p>And the gains are shrinking: pushing machine translation up by just <strong>0.1 points</strong> on a 100-point scale cost an estimated <strong>$150,000</strong> in compute.</p>
+          <!-- TODO(Leo): cost-vs-gain interaction -->
         </div>
       </section>
 
       <section class="chapter">
         <div class="chapter-content">
-          <h2>But wait — what's inside?</h2>
-          <p>Big models need big data. So developers scrape the <em>entire internet</em>. And the internet is not the world.</p>
-          <p>If you train on everything on the web, you also swallow its <strong>biases</strong>: whose voices are there, and whose are missing?</p>
+          <h2>Who pays, who profits?</h2>
+          <p>The burden is not evenly spread. Climate impacts hit <strong>vulnerable communities first</strong> — flooding in Sudan, rising seas in the Maldives.</p>
+          <p>Meanwhile the benefits flow to wealthy institutions in rich countries — and the technology is built almost exclusively for <strong>English</strong> and a handful of dominant languages.</p>
+          <p class="hint">The people paying the environmental price are often those least likely to benefit from the models.</p>
+          <!-- TODO(Leo): climate-justice visual -->
         </div>
       </section>
 
+      <!-- ================================================== -->
+      <!-- SECTION 3 · DATA & BIAS  ·  owner: @Maria          -->
+      <!-- TODO(Maria): refine texts, filter toggle widget    -->
+      <!-- ================================================== -->
       <section class="chapter">
         <div class="chapter-content">
-          <h2>The one-sided internet</h2>
-          <p>The people who shape the data are overwhelmingly not representative of humanity.</p>
-          <p>Reddit is dominated by young men. Wikipedia's editors are mostly men. So the "world" a language model learns is skewed from the start.</p>
+          <h2>The internet is not the world</h2>
+          <p>To get big, models swallow the web. But the web is <strong>not a representative sample of humanity</strong>.</p>
+          <p>67% of US Reddit users are men. Only 8.8–15% of Wikipedia editors are women. And more than <strong>90%</strong> of the world's languages have virtually no language technology at all.</p>
+          <!-- TODO(Maria): dataset composition visual -->
         </div>
       </section>
 
       <section class="chapter">
         <div class="chapter-content">
           <h2>Filtered silence</h2>
-          <p>Filters may screen out hateful words — but they also wash away <em>marginalised communities</em>.</p>
-          <p>A "bad words" list used to clean web data overwhelmingly flags sexual language, deleting words like <em>"twink"</em> — and with it, the voice of LGBTQ+ spaces that use that language.</p>
+          <p>To "clean" the data, developers filter it — for example with lists of ~400 "bad words".</p>
+          <p>But those lists are overwhelmingly sexual terms, so they also erase the language of <strong>marginalised communities</strong> — like LGBTQ+ spaces that use reclaimed words. The filter silences the very voices the data was already missing.</p>
+          <p>And at terabyte scale, nobody documents what is actually inside: <em>documentation debt</em> — harms you can no longer audit or fix.</p>
+          <!-- TODO(Maria): filter on/off toggle widget -->
+        </div>
+      </section>
+
+      <!-- ================================================== -->
+      <!-- SECTION 4 · REAL-WORLD HARMS  ·  owner: @Robin     -->
+      <!-- TODO(Robin): replace caseCardsChart with           -->
+      <!-- interactive flip-card carousel (3 cases)           -->
+      <!-- ================================================== -->
+      <section class="chapter">
+        <div class="chapter-content">
+          <h2>Fluent ≠ harmless</h2>
+          <p>Because we <em>trust</em> smooth language, synthetic text causes real harm: automated propaganda, extremist recruitment at scale — and AI errors that people act on without questioning.</p>
+          <p>Three cases show how it goes wrong.</p>
         </div>
       </section>
 
       <section class="chapter">
         <div class="chapter-content">
-          <h2>So fluent. So hollow.</h2>
-          <p>Even with all this data, the parrot doesn't understand. It predicts the next likely word — nothing more.</p>
-          <p>When it produces text that looks coherent, we humans are the ones supplying the meaning. That is exactly what makes it dangerous.</p>
+          <h2>Three failures, one root cause</h2>
+          <p><strong>1 · Wrongful arrest</strong> — a translation app turned "good morning" into "attack them"; the speaker was arrested.</p>
+          <p><strong>2 · Bot propaganda</strong> — models generate endless plausible conspiracy posts, faking human crowds.</p>
+          <p><strong>3 · Privacy leaks</strong> — models memorise training data and can regurgitate personal information.</p>
+          <p class="hint">Different failures, one root: form without meaning, at scale.</p>
+          <!-- TODO(Robin): interactive flip cards -->
         </div>
       </section>
 
+      <!-- ================================================== -->
+      <!-- SECTION 5 · PATHS FORWARD  ·  owners: ALL          -->
+      <!-- ================================================== -->
       <section class="chapter">
-        <div class="chapter-content">
+        <div class="chapter-content wide">
           <h2>What can we do?</h2>
-          <p>The researchers' verdict: don't just scale up bigger and bigger. <strong>Curation beats consumption</strong> — curate smaller, documented datasets rather than swallowing the whole internet blindly.</p>
-          <p>And measure success not only by accuracy, but by <em>cost</em> and <em>efficiency</em>.</p>
+          <p>The authors' answer is not "bigger", but <strong>smarter and fairer</strong>:</p>
+          <table class="compare">
+            <tr><th>Unchecked scaling</th><th>Curated &amp; sustainable AI</th></tr>
+            <tr><td>Ingest everything on the web</td><td>Collect only what can be <strong>documented</strong> and vetted</td></tr>
+            <tr><td>Bigger = better</td><td>Measure <strong>energy and cost</strong>, not just accuracy ("Green AI")</td></tr>
+            <tr><td>Build first, fix later</td><td><strong>Pre-mortems</strong> &amp; affected communities in the design</td></tr>
+          </table>
+          <p class="source">Source: Bender, Gebru, McMillan-Major &amp; Shmitchell (2021), §7</p>
         </div>
       </section>
 
     </div>
   </main>
 
-  <!-- ============ OUTRO ============ -->
+  <!-- ================= OUTRO ================= -->
   <footer class="outro">
     <div class="outro-inner">
       <h2>Stochastic Parrots</h2>

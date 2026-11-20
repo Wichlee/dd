@@ -36,3 +36,17 @@ const BIAS_FACTS = {
   languagesNoSupport: 90,   // % of world's low-resource languages w/o tech support
   badWordCount: 400,        // ~400 "bad words" in C4 filter
 };
+
+/* ------------------------------------------------------------------
+   Next-word autocomplete simulator (Section 1, @Erik).
+   ILLUSTRATIVE probabilities — plausible next-word distributions,
+   NOT measured values from the paper. Kept static on purpose:
+   the point is the *mechanism* (picking likely, not true, words).
+------------------------------------------------------------------- */
+const AUTOCOMPLETE_STEPS = [
+  { sentence: "The doctor said", options: [["she", 41], ["he", 37], ["that", 14]] },
+  { sentence: "The doctor said she", options: [["was", 38], ["would", 27], ["had", 19]] },
+  { sentence: "The doctor said she was", options: [["tired", 22], ["fine", 18], ["wrong", 12]] },
+];
+const AUTOCOMPLETE_ENDING =
+  "…and it never once wondered which word it chose — or what it meant.";

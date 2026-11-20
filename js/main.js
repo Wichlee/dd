@@ -26,21 +26,26 @@ async function boot() {
   init();
 }
 
-/* Map each chapter index -> chart + step */
+/* Map each chapter index -> chart + step.
+   Order follows the outline:
+   [0-1] Hero/scale (@Erik) · [2-4] Parrot section (@Erik)
+   [5-7] Environment (@Leo) · [8-9] Data & bias (@Maria)
+   [10-11] Harms (@Robin)  · [12] Paths forward (all, HTML table) */
 function buildCharts() {
-  // We share ONE sticky stage across all chapters; each chapter triggers the
-  // chart that matches the grouped stage. Chapters 2-3 -> bubble, 4-5 -> co2... 
   return [
-    { idx: 0, render: "parrotChart", step: null },                    // hook
-    { idx: 1, render: "bubbleChart", step: 2019 },                    // growth (enters)
-    { idx: 2, render: "bubbleChart", step: 2021 },                    // growth (climax)
-    { idx: 3, render: "co2Chart", step: null },                       // price
-    { idx: 4, render: "computeChart", step: null },                   // bleu/cost
-    { idx: 5, render: "whoChart", step: null },                       // data representativeness
-    { idx: 6, render: "whoChart", step: null },                       // one-sided internet
-    { idx: 7, render: "filterChart", step: null },                    // filtered silence
-    { idx: 8, render: "parrotChart", step: null },                    // hollow parrot
-    { idx: 9, render: "parrotChart", step: null },                    // what can we do (final)
+    { idx: 0, render: "bubbleChart", step: 2019 },
+    { idx: 1, render: "bubbleChart", step: 2021 },
+    { idx: 2, render: "parrotChart", step: null },
+    { idx: 3, render: "autocompleteChart", step: null },
+    { idx: 4, render: "parrotChart", step: null },
+    { idx: 5, render: "co2Chart", step: null },
+    { idx: 6, render: "computeChart", step: null },
+    { idx: 7, render: "co2Chart", step: null },
+    { idx: 8, render: "whoChart", step: null },
+    { idx: 9, render: "filterChart", step: null },
+    { idx: 10, render: "caseCardsChart", step: null },
+    { idx: 11, render: "caseCardsChart", step: null },
+    { idx: 12, render: null, step: null }, // HTML comparison table, keep chart
   ];
 }
 

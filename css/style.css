@@ -136,6 +136,40 @@ h1, h2 {
   padding-left: 0.8rem;
 }
 
+/* Wider content box (e.g. comparison table in Section 5) */
+.chapter-content.wide { max-width: 620px; }
+
+/* Comparison table (Paths Forward) */
+.compare {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin: 0.6rem 0;
+}
+.compare th {
+  text-align: left;
+  color: var(--accent);
+  font-weight: 700;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+}
+.compare td {
+  padding: 0.45rem 0.6rem;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+.compare td:first-child { color: var(--muted); text-decoration: line-through; }
+.compare td:last-child { color: var(--ink); }
+.compare td:last-child strong { color: #fff; }
+
+/* Right-aligned source note under charts/tables */
+.source {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: right;
+  margin-top: 0.4rem;
+}
+
 /* ---------- OUTRO ---------- */
 .outro {
   min-height: 80vh;

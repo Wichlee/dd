@@ -484,6 +484,197 @@ const Charts = (() => {
     };
   }
 
+  /* ---------- Chart 7: Next-word autocomplete simulator (@Erik) ----------
+     Interactive: the user clicks a candidate word; the parrot "accepts" it
+     and immediately predicts the next one. Static illustrative data —
+     no API, no backend.
+  ----------------------------------------------------------------------- */
+  function autocompleteChart(sel) {
+    const { g, w, h } = svgRoot(sel);
+    const innerW = w - M.left - M.right;
+    const innerH = h - M.top - M.bottom;
+
+    g.append("text").attr("class", "chart-title").attr("x", 0).attr("y", -M.top + 30).text("Next-word roulette");
+    g.append("text").attr("class", "stage-label").attr("x", 0).attr("y", -M.top + 52)
+      .text("Pick a candidate — the model only ever picks the *likely* word");
+
+    // --- current sentence (chips) ---
+    const sentenceG = g.append("g").attr("transform", `translate(0, 40)`);
+    const chips = sentenceG.selectAll("text").data([AUTOCOMPLETE_STEPS[0].sentence])
+      .enter().append("text")
+      .attr("class", "chart-title")
+      .attr("x", 0).attr("y", 0)
+      .text(d => d);
+
+    // --- candidate bars ---
+    const barX = 150;                    // bars start after the word labels
+    const barMaxW = Math.min(innerW - barX - 40, 320);
+    const barH = 30, barGap = 14;
+    const candG = g.append("g").attr("transform", `translate(0, 110)`);
+
+    let stepIdx = 0;
+
+    function renderCandidates() {
+      const step = AUTOCOMPLETE_STEPS[stepIdx];
+      candG.selectAll("*").remove();
+
+      candG.selectAll("text.label")
+        .data(step.options).enter()
+        .append("text")
+        .attr("class", "label")
+        .attr("x", 0)
+        .attr("y", (d, i) => i * (barH + barGap) + barH / 2)
+        .attr("dy", "0.35em")
+        .attr("fill", "#fff")
+        .style("font-size", 16)
+        .style("font-weight", 700)
+        .text(d => d[0]);
+
+      candG.selectAll("rect.bar")
+        .data(step.options).enter()
+        .append("rect")
+        .attr("class", "bar")
+        .attr("x", barX)
+        .attr("y", (d, i) => i * (barH + barGap))
+        .attr("width", 0)
+        .attr("height", barH)
+        .attr("rx", 6)
+        .attr("fill", "#ffd166")
+        .attr("opacity", 0.85)
+        .style("cursor", "pointer")
+        .transition().duration(600)
+        .attr("width", d => (d[1] / 50) * barMaxW);
+
+      candG.selectAll("text.pct")
+        .data(step.options).enter()
+        .append("text")
+        .attr("class", "pct")
+        .attr("x", barX + 8)
+        .attr("y", (d, i) => i * (barH + barGap) + barH / 2)
+        .attr("dy", "0.35em")
+        .attr("fill", "#10141c")
+        .style("font-size", 13)
+        .style("font-weight", 700)
+        .style("pointer-events", "none")
+        .text(d => d[1] + "%");
+
+      candG.selectAll("rect.hit")
+        .data(step.options).enter()
+        .append("rect")
+        .attr("class", "hit")
+        .attr("x", barX)
+        .attr("y", (d, i) => i * (barH + barGap))
+        .attr("width", barMaxW)
+        .attr("height", barH)
+        .attr("fill", "transparent")
+        .style("cursor", "pointer")
+        .on("click", (ev, d) => pick(d[0]));
+    }
+
+    function pick(word) {
+      if (stepIdx >= AUTOCOMPLETE_STEPS.length) return;
+      const next = AUTOCOMPLETE_STEPS[stepIdx].sentence + " " + word;
+      chips.data([next]).text(next); // extend the sentence
+      stepIdx += 1;
+      if (stepIdx < AUTOCOMPLETE_STEPS.length) {
+        renderCandidates();
+      } else {
+        // finished: hollow punchline
+        candG.selectAll("*").remove();
+        candG.append("text")
+          .attr("class", "chart-title")
+          .attr("x", 0).attr("y", barH)
+          .attr("fill", "#f05c7a")
+          .style("font-style", "italic")
+          .text(AUTOCOMPLETE_ENDING);
+        candG.append("text")
+          .attr("x", 0).attr("y", barH + 40)
+          .attr("fill", "#9aa5b8")
+          .style("font-size", 13)
+          .text("Model's understanding of the sentence so far: 0%");
+        candG.append("text")
+          .attr("x", 0).attr("y", barH + 64)
+          .attr("fill", "#ffd166")
+          .style("font-size", 13)
+          .style("cursor", "pointer")
+          .text("↺ play again")
+          .on("click", () => {
+            stepIdx = 0;
+            chips.data([AUTOCOMPLETE_STEPS[0].sentence]).text(AUTOCOMPLETE_STEPS[0].sentence);
+            renderCandidates();
+          });
+      }
+    }
+
+    renderCandidates();
+
+    return { step() { /* user-driven interaction; scroll step keeps state */ } };
+  }
+
+  /* ---------- Chart 8: Case-study cards (@Robin placeholder) ----------
+     Simple static preview of the three failure cases from §6.2.
+     TODO(Robin): replace with an interactive flip-card carousel.
+  --------------------------------------------------------------------- */
+  function caseCardsChart(sel) {
+    const { g, w, h } = svgRoot(sel);
+    const innerW = w - M.left - M.right;
+    const innerH = h - M.top - M.bottom;
+
+    g.append("text").attr("class", "chart-title").attr("x", 0).attr("y", -M.top + 30).text("When fluent text goes wrong");
+
+    const cases = [
+      { title: "Wrongful arrest", body: "“good morning” → “attack them”: a mistranslation had real consequences." },
+      { title: "Bot propaganda", body: "Endless plausible posts, faking human crowds for extremism." },
+      { title: "Privacy leaks", body: "Memorised training data regurgitated on request." },
+    ];
+    const cardW = Math.min(200, (innerW - 40) / 3), cardH = Math.min(190, innerH * 0.5);
+    const gap = 24;
+
+    const cardG = g.append("g").selectAll("g.card")
+      .data(cases).enter()
+      .append("g")
+      .attr("class", "card")
+      .attr("transform", (d, i) => `translate(${i * (cardW + gap)},${(innerH - cardH) / 2})`);
+
+    cardG.append("rect")
+      .attr("width", cardW).attr("height", cardH)
+      .attr("rx", 12)
+      .attr("fill", "rgba(255,255,255,0.06)")
+      .attr("stroke", "rgba(255,255,255,0.25)");
+
+    cardG.append("text")
+      .attr("x", 16).attr("y", 34)
+      .attr("fill", "#ffd166")
+      .style("font-size", 15).style("font-weight", 700)
+      .text(d => d.title);
+
+    // simple word-wrapped body text
+    cardG.each(function (d) {
+      const words = d.body.split(" ");
+      const maxChars = 24;
+      let line = "", lineNo = 0;
+      const gSelf = d3.select(this);
+      words.forEach(word => {
+        if ((line + " " + word).trim().length > maxChars) {
+          gSelf.append("text").attr("x", 16).attr("y", 62 + lineNo * 18)
+            .attr("fill", "#cdd5e0").style("font-size", 12).text(line.trim());
+          line = word; lineNo += 1;
+        } else {
+          line = (line + " " + word).trim();
+        }
+      });
+      if (line) gSelf.append("text").attr("x", 16).attr("y", 62 + lineNo * 18)
+        .attr("fill", "#cdd5e0").style("font-size", 12).text(line.trim());
+    });
+
+    g.append("text")
+      .attr("x", 0).attr("y", (innerH + cardH) / 2 + 34)
+      .attr("fill", "#9aa5b8").style("font-size", 12)
+      .text("Cases from §6.2 of the paper · interactive cards coming soon");
+
+    return { step() { /* static preview */ } };
+  }
+
   /* ---------- Tooltip helpers ---------- */
   function showTip(ev, d) {
     const tip = d3.select("#tooltip");
@@ -511,5 +702,5 @@ const Charts = (() => {
     return 8 + t * 42;
   }
 
-  return { bubbleChart, co2Chart, computeChart, whoChart, filterChart, parrotChart };
+  return { bubbleChart, co2Chart, computeChart, whoChart, filterChart, parrotChart, autocompleteChart, caseCardsChart };
 })();
