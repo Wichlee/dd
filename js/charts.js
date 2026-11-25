@@ -1,363 +1,339 @@
-/* D3 chart renderers. Each takes the target selection and renders SVG. */
+/* D3 chart renderers. Each takes the target selection and renders SVG.
+   Every chart returns { step() }. main.js calls step() whenever its chapter
+   becomes active, so each chart animates in on entry.
+   All figures come from Bender, Gebru et al. (2021) unless marked illustrative. */
 
 const Charts = (() => {
 
   const W = () => document.getElementById("chart").clientWidth || 800;
-  const H = () => window.innerHeight;
-  const M = { top: 70, right: 170, bottom: 60, left: 70 };
+  const H = () => document.getElementById("chart").clientHeight || window.innerHeight;
+  const M = { top: 96, right: 40, bottom: 64, left: 56 };
 
-  /* Set up a fixed SVG canvas once, return the root selection */
+  const C = {
+    gold: "#ffd166", orange: "#f0a35e", red: "#f05c7a", blue: "#5c9dff",
+    teal: "#38b6a8", grey: "#9aa5b8", ink: "#e8ecf3", dark: "#10141c",
+  };
+
+  /* Fixed SVG canvas; returns root selection already shifted by the margins */
   function svgRoot(sel) {
     sel.selectAll("*").remove();
     const w = W(), h = H();
-    const svg = sel
-      .append("svg")
-      .attr("width", w)
-      .attr("height", h)
-      .attr("viewBox", `0 0 ${w} ${h}`);
-    return { svg, g: svg.append("g").attr("transform", `translate(${M.left},${M.top})`), w, h };
+    const svg = sel.append("svg").attr("width", w).attr("height", h).attr("viewBox", `0 0 ${w} ${h}`);
+    const g = svg.append("g").attr("transform", `translate(${M.left},${M.top})`);
+    return { svg, g, w, h, innerW: w - M.left - M.right, innerH: h - M.top - M.bottom };
+  }
+
+  /* Same title block on every chart → consistent look */
+  function header(g, title, sub) {
+    g.append("text").attr("class", "c-title").attr("x", 0).attr("y", -M.top + 38).text(title);
+    if (sub) g.append("text").attr("class", "c-sub").attr("x", 0).attr("y", -M.top + 62).text(sub);
+  }
+  function source(g, innerH, text) {
+    g.append("text").attr("class", "c-src").attr("x", 0).attr("y", innerH + 44).text("Source: " + text);
+  }
+  function wrap(textSel, x, y, maxChars, lineH) {
+    const words = textSel.text().split(/\s+/);
+    textSel.text(null);
+    let line = [], n = 0, tspan = textSel.append("tspan").attr("x", x).attr("y", y);
+    words.forEach(wd => {
+      line.push(wd);
+      if (line.join(" ").length > maxChars && line.length > 1) {
+        line.pop(); tspan.text(line.join(" "));
+        line = [wd]; n += 1;
+        tspan = textSel.append("tspan").attr("x", x).attr("y", y + n * lineH);
+      }
+    });
+    tspan.text(line.join(" "));
+    return n + 1;
   }
 
   /* ---------- Chart 1: Model growth bubbles (log scale) ---------- */
   function bubbleChart(sel) {
-    const { g, w, h } = svgRoot(sel);
-    const innerW = w - M.left - M.right;
-    const innerH = h - M.top - M.bottom;
+    const { g, innerW, innerH } = svgRoot(sel);
+    header(g, "The size race, 2019 → 2021", "Each bubble is a language model · height = number of parameters (log scale)");
 
-    g.append("text")
-      .attr("class", "chart-title")
-      .attr("x", 0).attr("y", -M.top + 30)
-      .text("Language models, 2019 → 2021");
+    const x = d3.scaleLinear().domain([2018.6, 2021.6]).range([0, innerW]);
+    const y = d3.scaleLog().base(10).domain([3e7, 4e12]).range([innerH, 0]);
+    const dataColor = d => d.dataGB == null ? C.grey : d.dataGB < 200 ? C.blue : d.dataGB < 700 ? C.teal : C.orange;
 
-    g.append("text")
-      .attr("class", "stage-label")
-      .attr("x", 0).attr("y", -M.top + 52)
-      .text("Bubble size = parameters · colour = training data size");
+    g.append("g").attr("class", "axis").attr("transform", `translate(0,${innerH})`)
+      .call(d3.axisBottom(x).tickValues([2019, 2020, 2021]).tickFormat(d3.format("d")));
+    g.append("g").attr("class", "axis")
+      .call(d3.axisLeft(y).tickValues([1e8, 1e9, 1e10, 1e11, 1e12]).tickFormat(d => d3.format("~s")(d).replace("G", "B").replace("T", "T")));
+    g.append("text").attr("class", "c-label").attr("x", -M.left + 4).attr("y", -14).text("parameters");
 
-    const xMax = 2021.8, xMin = 2017.8;
-    const x = d3.scaleLinear().domain([xMin, xMax]).range([0, innerW]);
+    // de-clutter models that sit on the same year/size
+    const jitter = {};
+    MODELS.forEach(m => { const k = m.year + ":" + Math.round(Math.log10(m.params) * 3); jitter[k] = (jitter[k] || 0) + 1; m._j = jitter[k] - 1; });
 
-    // log scale for parameters: from ~1e7 up to ~2e12
-    const y = d3.scaleLog().base(10).domain([1e7, 4e12]).range([innerH, 0]).nice();
-
-    // bubbles visible only from their release year onward
-    const vis = d3.scaleThreshold()
-      .domain([2019.5, 2020.5])
-      .range([1, 2, 3]); // opacity multiplier used in main loop
-
-    const bubbleSel = g.append("g")
-      .selectAll(".bubble")
-      .data(MODELS.map((m, i) => ({ ...m, i })))
-      .enter()
-      .append("circle")
-      .attr("class", "bubble")
-      .attr("cx", d => x(d.year))
-      .attr("cy", d => y(d.params))
-      .attr("r", d => rScale(d.params))
-      .attr("fill", d => d.color)
-      .attr("stroke", "rgba(255,255,255,0.35)")
-      .attr("stroke-width", 1)
-      .attr("opacity", 0);
-
-    bubbleSel
-      .on("mouseover", (ev, d) => showTip(ev, d))
-      .on("mousemove", (ev) => moveTip(ev))
-      .on("mouseout", hideTip);
-
-    // labels only for the landmark models
-    const labelSel = g.append("g").selectAll(".blabel")
-      .data(MODELS)
-      .enter()
-      .append("text")
-      .attr("class", "blabel")
-      .attr("x", d => x(d.year))
-      .attr("y", d => y(d.params))
-      .attr("text-anchor", "start")
-      .attr("fill", "#fff")
-      .attr("font-size", 11)
-      .attr("dy", -14)
+    const px = d => x(d.year) + (d._j % 3 - 1) * 46 + (d.year === 2019 ? 40 : 0) - 10;
+    const nodes = g.append("g").selectAll("g").data(MODELS).enter().append("g")
       .attr("opacity", 0)
-      .text(d => d.name);
+      .attr("transform", d => `translate(${px(d)},${y(d.params)})`);
+    nodes.append("circle").attr("r", d => rScale(d.params))
+      .attr("fill", dataColor).attr("fill-opacity", 0.85)
+      .attr("stroke", "rgba(255,255,255,0.5)")
+      .style("cursor", "pointer")
+      .on("mouseover", (ev, d) => showTip(ev, d))
+      .on("mousemove", moveTip).on("mouseout", hideTip);
+    nodes.append("text").attr("class", "c-label").attr("text-anchor", "middle")
+      .attr("y", d => -rScale(d.params) - 6).attr("fill", "#fff")
+      .text(d => ["BERT", "GPT-3", "Switch-C", "GShard", "T5-11B", "MegatronLM", "T-NLG"].includes(d.name) ? d.name : "");
 
-    // axis
-    const xAxis = d3.axisBottom(x).ticks(3).tickFormat(d3.format("d"));
-    const yAxis = d3.axisLeft(y).tickFormat(d3.format(".0e"));
-
-    g.append("g").attr("class", "axis").attr("transform", `translate(0,${innerH})`).call(xAxis);
-    g.append("g").attr("class", "axis").call(yAxis);
-
-    g.append("text")
-      .attr("class", "stage-label")
-      .attr("x", innerW / 2)
-      .attr("y", innerH + 46)
-      .attr("text-anchor", "middle")
-      .text("Year of release →");
-
-    // legend
-    const legend = g.append("g").attr("class", "legend").attr("transform", `translate(${innerW + 24},${innerH - 180})`);
-    const legendData = [
-      { label: "smaller dataset (<200 GB)", color: "#5c9dff" },
-      { label: "mid dataset (~200–600 GB)", color: "#38b6a8" },
-      { label: "large dataset (700+ GB)", color: "#f0a35e" },
-    ];
-    legend.selectAll("rect")
-      .data(legendData)
-      .enter()
-      .append("rect")
-      .attr("x", 0).attr("y", (d, i) => i * 20)
-      .attr("width", 12).attr("height", 12)
-      .attr("rx", 2)
-      .attr("fill", d => d.color);
-    legend.selectAll("text")
-      .data(legendData)
-      .enter()
-      .append("text")
-      .attr("x", 18).attr("y", (d, i) => i * 20 + 10)
-      .text(d => d.label)
-      .attr("font-size", 11);
-
-    // year readout
-    const yearLabel = g.append("text")
-      .attr("class", "stage-label")
-      .attr("x", 0).attr("y", -10)
-      .attr("font-size", 15)
-      .attr("fill", "#ffd166");
+    const legend = g.append("g").attr("transform", "translate(10,0)");
+    [["< 200 GB training data", C.blue], ["200–700 GB", C.teal], ["700+ GB", C.orange], ["unknown", C.grey]].forEach((d, i) => {
+      legend.append("circle").attr("cx", 5).attr("cy", i * 20).attr("r", 5).attr("fill", d[1]);
+      legend.append("text").attr("class", "c-label").attr("x", 18).attr("y", i * 20 + 4).text(d[0]);
+    });
+    const readout = g.append("text").attr("class", "c-big").attr("x", innerW).attr("y", innerH - 20)
+      .attr("text-anchor", "end").attr("fill", C.gold);
+    source(g, innerH, "Table 1 · hover a bubble for details");
 
     return {
       step(t) {
-        // t = current year (2019, 2020, 2021)
-        const opMin = 0.05, opMax = 1;
-        bubbleSel.attr("opacity", d => {
-          if (d.year > t) return 0;
-          const m = vis(d.year);
-          const lerp = d.year === t ? 1 : m - 1; // fully bright in its release year
-          return (opMin + (opMax - opMin) * lerp) * 0.9;
-        });
-        labelSel.attr("opacity", d => (d && d.year === t ? 1 : 0));
-        yearLabel.text(`Showing models released up to ${t}`);
+        t = t || 2021;
+        nodes.transition().duration(700).attr("opacity", d => d.year <= t ? 1 : 0);
+        readout.text(t === 2021 ? "BERT → Switch-C: ≈4,600×" : "2019: hundreds of millions");
       },
     };
   }
 
-  /* ---------- Chart 2: CO2 comparison bars ---------- */
+  /* ---------- Chart 2: CO₂ (paper §3) ---------- */
   function co2Chart(sel) {
-    const { g, w, h } = svgRoot(sel);
-    const innerW = w - M.left - M.right;
-    const innerH = h - M.top - M.bottom;
+    const { g, innerW, innerH } = svgRoot(sel);
+    header(g, "The carbon bill of one training run", "Tonnes of CO₂ — compared with a person's yearly emissions");
 
-    g.append("text").attr("class", "chart-title").attr("x", 0).attr("y", -M.top + 30).text("CO₂ emissions, one training run");
-
-    const data = [
-      { label: "Average person, 1 year", co2: 5, color: "#9aa5b8" },
-      { label: "One person's lifetime (76 yrs)", co2: 5 * 76, color: "#9aa5b8" },
-      { label: "Train BERT (1×)", co2: 284 / 2, color: "#f0a35e" },   // approx, one base run
-      { label: "Train Transformer + search", co2: 284, color: "#f05c7a" },
+    const rows = [
+      { label: "Average person, 1 year", v: COST_FACTS.humanYearCO2, color: C.grey },
+      { label: "Transformer (big) + neural architecture search", v: COST_FACTS.transformerCO2, color: C.red },
     ];
+    const x = d3.scaleLinear().domain([0, 300]).range([0, innerW]);
+    const bars = [];
+    rows.forEach((r, i) => {
+      const y0 = i * 76;
+      g.append("text").attr("class", "c-label").attr("x", 0).attr("y", y0 + 4).text(r.label);
+      g.append("rect").attr("x", 0).attr("y", y0 + 12).attr("width", innerW).attr("height", 30).attr("rx", 6).attr("fill", "rgba(255,255,255,0.05)");
+      const b = g.append("rect").attr("x", 0).attr("y", y0 + 12).attr("width", 0).attr("height", 30).attr("rx", 6).attr("fill", r.color);
+      const t = g.append("text").attr("class", "c-val").attr("y", y0 + 33).attr("x", 10).attr("opacity", 0).text(r.v + " t");
+      bars.push({ b, t, r });
+    });
 
-    const max = 320;
-    const x = d3.scaleLinear().domain([0, max]).range([0, innerW]);
-    const y = d3.scaleBand().domain(data.map(d => d.label)).range([0, innerH]).padding(0.3);
-
-    const bars = g.append("g").selectAll("rect")
-      .data(data).enter()
-      .append("rect")
-      .attr("class", "bubble")
-      .attr("x", 0).attr("y", d => y(d.label))
-      .attr("width", 0).attr("height", y.bandwidth())
-      .attr("fill", d => d.color).attr("rx", 4);
-
-    const labels = g.append("g").selectAll("text")
-      .data(data).enter()
-      .append("text")
-      .attr("class", "legend")
-      .attr("x", d => 8).attr("y", d => y(d.label) + y.bandwidth() / 2)
-      .attr("dy", "0.35em")
-      .attr("fill", "#fff")
-      .style("font-weight", 700)
-      .text(() => '');
-
-    const caption = g.append("text").attr("class", "hint-in-svg").attr("x", 0).attr("y", innerH + 34).attr("fill", "#9aa5b8")
-      .text("An average person emits ~5 t CO₂e per year. One big model can match a whole lifetime.");
-
-    const dd = g.append("g");
-    const yearRects = bars;
+    const gy = 190;
+    g.append("text").attr("class", "c-sub").attr("x", 0).attr("y", gy)
+      .text("Each dot = one person's CO₂ for a whole year (≈ 5 t)");
+    const per = Math.max(10, Math.floor(innerW / 30));
+    const sp = innerW / per;
+    const n = Math.round(COST_FACTS.transformerCO2 / COST_FACTS.humanYearCO2);
+    const dots = g.append("g").attr("transform", `translate(0,${gy + 30})`).selectAll("circle")
+      .data(d3.range(n)).enter().append("circle")
+      .attr("cx", i => (i % per) * sp + sp / 2).attr("cy", i => Math.floor(i / per) * sp)
+      .attr("r", 0).attr("fill", C.red);
+    const rowsN = Math.ceil(n / per);
+    g.append("text").attr("class", "c-big").attr("x", 0).attr("y", gy + 60 + rowsN * sp + 20)
+      .attr("fill", C.red).text(`≈ ${n} person-years in one run`);
+    g.append("text").attr("class", "c-label").attr("x", 0).attr("y", gy + 60 + rowsN * sp + 48)
+      .text("Training a single BERT base model alone ≈ the energy of a trans-American flight.");
+    source(g, innerH, "Bender et al. 2021, §3 (citing Strubell et al.)");
 
     return {
       step() {
-        bars.transition().duration(900)
-          .attr("width", d => x(d.co2))
-          .attr("opacity", d => (d.co2 === 284 ? 1 : 0.65));
-        dd.selectAll("text").remove();
+        bars.forEach((o, i) => {
+          o.b.transition().delay(i * 300).duration(1000).attr("width", Math.max(3, x(o.r.v)));
+          o.t.transition().delay(i * 300 + 800).attr("opacity", 1)
+            .attr("x", Math.max(10, x(o.r.v) - (i ? 70 : -8)));
+        });
+        dots.transition().delay((i) => 900 + i * 25).duration(250).attr("r", sp * 0.32);
       },
     };
   }
 
-  /* ---------- Chart 3: Compute growth vs Moore's law ---------- */
+  /* ---------- Chart 3: Compute growth + cost of tiny gains (paper §3) ---------- */
   function computeChart(sel) {
-    const { g, w, h } = svgRoot(sel);
-    const innerW = w - M.left - M.right;
-    const innerH = h - M.top - M.bottom;
+    const { g, innerW, innerH } = svgRoot(sel);
+    header(g, "More compute, ever smaller gains", "Growth of compute used to train the largest models (log scale)");
 
-    g.append("text").attr("class", "chart-title").attr("x", 0).attr("y", -M.top + 30).text("Compute needed to train the biggest models");
-
-    // 300,000x in 6 years vs Moore (2x per 18 months ≈ ~16x in 6y)
+    const hl = innerH * 0.5;
     const x = d3.scaleLinear().domain([0, 6]).range([0, innerW]);
-    const y = d3.scaleLog().base(10).domain([1, 400000]).range([innerH, 0]).nice();
+    const y = d3.scaleLog().domain([1, 4e5]).range([hl, 0]);
+    const pts = d3.range(7).map(i => ({ i, lm: Math.pow(300000, i / 6), moore: Math.pow(2, i / 1.5) }));
 
-    const lineLM = d3.line()
-      .x((d, i) => x(i))
-      .y(d => y(d.lm));
-    const lineMoore = d3.line()
-      .x((d, i) => x(i))
-      .y(d => y(d.moore));
+    g.append("g").attr("class", "axis").attr("transform", `translate(0,${hl})`)
+      .call(d3.axisBottom(x).ticks(6).tickFormat(d => d === 0 ? "start" : "+" + d + "y"));
+    g.append("g").attr("class", "axis").call(d3.axisLeft(y).tickValues([1, 10, 100, 1e3, 1e4, 1e5]).tickFormat(d => "×" + d3.format("~s")(d)));
 
-    const pts = [];
-    for (let i = 0; i <= 6; i++) {
-      pts.push({ lm: Math.pow(300000, i / 6), moore: Math.pow(2, i / 1.5) });
-    }
+    const mk = (key, color, dash) => g.append("path").datum(pts)
+      .attr("d", d3.line().x(d => x(d.i)).y(d => y(d[key])))
+      .attr("fill", "none").attr("stroke", color).attr("stroke-width", dash ? 2 : 4).attr("stroke-dasharray", dash || null);
+    const lm = mk("lm", C.gold), moore = mk("moore", C.grey, "5 5");
+    g.append("text").attr("class", "c-label").attr("fill", C.gold).attr("x", x(3.2)).attr("y", y(300) - 14).attr("text-anchor", "end").text("largest language models: ×300,000");
+    g.append("text").attr("class", "c-label").attr("x", x(4.2)).attr("y", y(30) + 20).text("Moore's law (2× / 18 months ≈ ×16)");
+    const dot = g.append("circle").attr("cx", x(6)).attr("cy", y(300000)).attr("r", 7).attr("fill", C.gold).attr("opacity", 0);
 
-    const lm = g.append("path").datum(pts)
-      .attr("class", "axis")
-      .attr("d", lineLM)
-      .attr("fill", "none").attr("stroke", "#ffd166").attr("stroke-width", 3);
-    const moore = g.append("path").datum(pts)
-      .attr("class", "axis")
-      .attr("d", lineMoore)
-      .attr("fill", "none").attr("stroke", "#9aa5b8")
-      .attr("stroke-width", 2).attr("stroke-dasharray", "4 4");
-
-    g.append("g").attr("class", "axis").attr("transform", `translate(0,${innerH})`)
-      .call(d3.axisBottom(x).ticks(4).tickFormat(d => d + "y"));
-    g.append("g").attr("class", "axis").call(d3.axisLeft(y));
-
-    // labels
-    g.append("text").attr("x", innerW * 0.62).attr("y", 60).attr("fill", "#ffd166")
-      .style("font-size", 13).text("language models: ×300,000");
-    g.append("text").attr("x", innerW * 0.32).attr("y", innerH * 0.55).attr("fill", "#9aa5b8")
-      .style("font-size", 13).text("Moore's law: ~×16");
-
-    const gmark = g.append("circle")
-      .attr("r", 6).attr("fill", "#ffd166")
-      .attr("cx", x(6)).attr("cy", y(300000))
-      .attr("opacity", 0);
+    const ty = hl + 70;
+    g.append("rect").attr("x", 0).attr("y", ty).attr("width", innerW).attr("height", 118).attr("rx", 12)
+      .attr("fill", "rgba(255,255,255,0.05)").attr("stroke", "rgba(255,255,255,0.14)");
+    const money = g.append("text").attr("class", "c-huge").attr("x", 20).attr("y", ty + 62).attr("fill", C.red).text("$0");
+    const desc = g.append("text").attr("class", "c-label").attr("fill", C.ink).text("extra compute cost for just +0.1 BLEU points (English → German machine translation, with neural architecture search)");
+    wrap(desc, 20, ty + 88, Math.floor(innerW / 7.2), 16);
+    source(g, innerH, "Bender et al. 2021, §3 · the smooth curve interpolates the two endpoints (illustrative)");
 
     return {
       step() {
-        const len = lm.node().getTotalLength();
-        lm.attr("stroke-dasharray", len).attr("stroke-dashoffset", len)
-          .transition().duration(1200).attr("stroke-dashoffset", 0);
-        moore.attr("stroke-dasharray", len).attr("stroke-dashoffset", len)
-          .transition().duration(1200).attr("stroke-dashoffset", 0);
-        gmark.transition().delay(500).attr("opacity", 1);
+        [lm, moore].forEach((p, i) => {
+          const len = p.node().getTotalLength();
+          p.attr("stroke-dasharray", i ? "5 5" : len + " " + len)
+            .attr("stroke-dashoffset", i ? 0 : len)
+            .transition().duration(1400).attr("stroke-dashoffset", 0);
+        });
+        dot.transition().delay(1300).attr("opacity", 1);
+        money.transition().duration(1400).tween("t", function () {
+          const i = d3.interpolateRound(0, COST_FACTS.bleuCostDollars);
+          return t => d3.select(this).text("$" + d3.format(",")(i(t)));
+        });
       },
     };
   }
 
-  /* ---------- Chart 4: Data representativeness (diverging / bias) ---------- */
+  /* ---------- Generic stat-card stack (justice, harms) ---------- */
+  function cardsChart(sel, cfg) {
+    const { g, innerW, innerH } = svgRoot(sel);
+    header(g, cfg.title, cfg.sub);
+    const n = cfg.items.length, gap = 18;
+    const ch = Math.min(150, (innerH - 10 - gap * (n - 1)) / n);
+    const cards = g.selectAll("g.card").data(cfg.items).enter().append("g").attr("class", "card")
+      .attr("opacity", 0).attr("transform", (d, i) => `translate(0,${i * (ch + gap) + 20})`);
+    cards.append("rect").attr("width", innerW).attr("height", ch).attr("rx", 12)
+      .attr("fill", "rgba(255,255,255,0.05)").attr("stroke", "rgba(255,255,255,0.14)");
+    cards.append("rect").attr("width", 6).attr("height", ch).attr("rx", 3).attr("fill", d => d.color);
+    const bigW = Math.min(190, innerW * 0.33);
+    cards.append("text").attr("class", "c-huge").attr("x", 24).attr("y", ch / 2 + 14).attr("fill", d => d.color).text(d => d.big);
+    cards.each(function (d) {
+      const s = d3.select(this);
+      s.append("text").attr("class", "c-head").attr("x", bigW + 24).attr("y", 36).text(d.label);
+      const t = s.append("text").attr("class", "c-label").attr("fill", C.ink).text(d.body);
+      wrap(t, bigW + 24, 60, Math.floor((innerW - bigW - 48) / 7), 18);
+    });
+    source(g, innerH, cfg.source);
+    return { step() { cards.transition().delay((d, i) => i * 350).duration(600).attr("opacity", 1); } };
+  }
+
+  function justiceChart(sel) {
+    return cardsChart(sel, {
+      title: "Who pays, who benefits?",
+      sub: "Climate harm lands first on communities the models are not built for",
+      source: "Bender et al. 2021, §3 & §2",
+      items: [
+        { big: "2100", color: C.blue, label: "The Maldives", body: "Likely to be underwater by 2100. Is it fair to ask them to pay the environmental price of ever larger English models?" },
+        { big: "800k", color: C.orange, label: "Sudan", body: "People affected by drastic floods, yet no comparable large models are built for Sudanese Arabic — or Dhivehi." },
+        { big: ">90%", color: C.teal, label: "Of the world's languages", body: "Used by more than a billion people, they have little to no language-technology support." },
+      ],
+    });
+  }
+
+  function caseCardsChart(sel) {
+    return cardsChart(sel, {
+      title: "When fluent text goes wrong",
+      sub: "Three ways form without meaning can hurt real people",
+      source: "Bender et al. 2021, §6",
+      items: [
+        { big: "1", color: C.red, label: "Wrongful arrest", body: "A Palestinian man's Arabic “good morning” was machine-translated as “hurt them” (English) and “attack them” (Hebrew). He was arrested." },
+        { big: "2", color: C.orange, label: "Bot propaganda", body: "Fluent, plausible text at scale makes fake accounts and extremist recruitment cheap to produce." },
+        { big: "3", color: C.gold, label: "Privacy leaks", body: "Very large models model their training data so closely that they can be prompted to output specific information from it." },
+      ],
+    });
+  }
+
+  /* ---------- Chart 4: Who is in the data? (paper §4) ---------- */
   function whoChart(sel) {
-    const { g, w, h } = svgRoot(sel);
-    const innerW = w - M.left - M.right;
-    const innerH = h - M.top - M.bottom;
-
-    g.append("text").attr("class", "chart-title").attr("x", 0).attr("y", -M.top + 30).text("Who shapes a language model's 'world'?");
-
-    const data = [
-      { label: "Reddit users who are men", value: 67, color: "#5c9dff" },
-      { label: "Reddit users under 30", value: 64, color: "#38b6a8" },
-      { label: "Wikipedia editors who are women", value: 12, color: "#f0a35e" },
-    ];
-
-    const y = d3.scaleBand().domain(data.map(d => d.label)).range([0, innerH]).padding(0.35);
+    const { g, innerW, innerH } = svgRoot(sel);
+    header(g, "Whose voices make up “the internet”?", "Share of each group, in %");
     const x = d3.scaleLinear().domain([0, 100]).range([0, innerW]);
-
-    const bars = g.append("g").selectAll("rect")
-      .data(data).enter()
-      .append("rect")
-      .attr("x", 0).attr("y", d => y(d.label))
-      .attr("width", 0).attr("height", y.bandwidth())
-      .attr("fill", d => d.color).attr("rx", 4);
-
-    const vals = g.append("g").selectAll("text")
-      .data(data).enter()
-      .append("text")
-      .attr("x", d => x(d.value) + 6).attr("y", d => y(d.label) + y.bandwidth() / 2)
-      .attr("dy", "0.35em").attr("fill", "#fff").style("font-size", 13).style("font-weight", 700)
-      .text(d => d.value + "%");
-
-    const caption = g.append("text").attr("x", 0).attr("y", innerH + 34).attr("fill", "#9aa5b8")
-      .text("The rest of the world's voices are under-represented — or missing entirely.");
-
-    return {
-      step() {
-        bars.transition().duration(700)
-          .attr("width", d => x(d.value));
-      },
-    };
-  }
-
-  /* ---------- Chart 5: Filtered silence (bad-words list composition) ---------- */
-  function filterChart(sel) {
-    const { g, w, h } = svgRoot(sel);
-    const innerW = w - M.left - M.right;
-    const innerH = h - M.top - M.bottom;
-
-    g.append("text").attr("class", "chart-title").attr("x", 0).attr("y", -M.top + 30).text("The 'bad word' filter isn't neutral");
-
-    const cx = innerW / 2, cy = innerH / 2, R = Math.min(innerW, innerH) / 2.4;
-
     const data = [
-      { label: "sexual language", value: 360, color: "#f05c7a" },
-      { label: "racial slurs", value: 25, color: "#f0a35e" },
-      { label: "other / misc", value: 15, color: "#9aa5b8" },
+      { label: "US Reddit users who are men", v: 67, lo: 67, color: C.blue, note: "GPT-2 training data is scraped from Reddit links" },
+      { label: "US Reddit users aged 18–29", v: 64, lo: 64, color: C.teal, note: "" },
+      { label: "Wikipedia editors who are women or girls", v: 15, lo: 8.8, color: C.orange, note: "8.8–15%, depending on the survey" },
+      { label: "Languages (of 1B+ speakers) with little or no tech support", v: 90, lo: 90, color: C.red, note: "“over 90%”" },
     ];
-
-    const pie = d3.pie().value(d => d.value).sort(null);
-    const arc = d3.arc().innerRadius(R * 0.5).outerRadius(R);
-    const outerArc = d3.arc().innerRadius(R * 0.62).outerRadius(R * 0.62);
-
-    const arcs = g.append("g").attr("transform", `translate(${cx},${cy})`)
-      .selectAll("path")
-      .data(pie(data))
-      .enter()
-      .append("path")
-      .attr("class", "bubble")
-      .attr("fill", d => d.data.color)
-      .attr("stroke", "rgba(0,0,0,0.4)");
-
-    const labels = g.append("g").attr("transform", `translate(${cx},${cy})`).selectAll("text")
-      .data(pie(data))
-      .enter()
-      .append("text")
-      .attr("class", "legend")
-      .attr("transform", d => `translate(${outerArc.centroid(d)})`)
-      .attr("text-anchor", "middle")
-      .attr("dy", "0.35em")
-      .attr("fill", "#fff")
-      .style("font-size", 12)
-      .text(d => `${d.data.label} (~${d.data.value})`);
-
+    const rh = innerH / data.length;
+    const bars = [];
+    data.forEach((d, i) => {
+      const y0 = i * rh + 10;
+      g.append("text").attr("class", "c-label").attr("fill", C.ink).attr("x", 0).attr("y", y0).text(d.label);
+      g.append("rect").attr("x", 0).attr("y", y0 + 10).attr("width", innerW).attr("height", 34).attr("rx", 6).attr("fill", "rgba(255,255,255,0.05)");
+      const lo = g.append("rect").attr("x", 0).attr("y", y0 + 10).attr("width", 0).attr("height", 34).attr("rx", 6).attr("fill", d.color);
+      const hi = g.append("rect").attr("x", 0).attr("y", y0 + 10).attr("width", 0).attr("height", 34).attr("rx", 6).attr("fill", d.color).attr("opacity", 0.45);
+      const val = g.append("text").attr("class", "c-val").attr("y", y0 + 33).attr("x", 10).attr("opacity", 0)
+        .text(d.lo === d.v ? d.v + "%" : d.lo + "–" + d.v + "%");
+      if (d.note) g.append("text").attr("class", "c-src").attr("x", 0).attr("y", y0 + 62).text(d.note);
+      bars.push({ lo, hi, val, d });
+    });
+    source(g, innerH, "Bender et al. 2021, §4 (Pew Internet Research 2016; Wikipedia surveys)");
     return {
       step() {
-        arcs.transition().duration(800)
-          .attrTween("d", function (d) {
-            const i = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
-            return t => arc(i(t));
-          });
+        bars.forEach((o, i) => {
+          o.hi.transition().delay(i * 250).duration(900).attr("width", x(o.d.v));
+          o.lo.transition().delay(i * 250).duration(900).attr("width", x(o.d.lo));
+          o.val.transition().delay(i * 250 + 700).attr("opacity", 1);
+        });
       },
     };
   }
 
-  /* ----------------------------------------------------------------------
-     Chart 6: The hollow parrot.
-     Uses the free OpenMoji parrot artwork (CC-BY-SA 4.0), embedded inline
-     (no remote load). A dark pupil tracks the cursor, the track/crest can
-     sway, and the speech line cycles between confident "intelligence"
-     and hollow failure.
-  ---------------------------------------------------------------------- */
-  const PARROT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" width="72" height="72"><g id="parrotcolor"><path fill="#d22f27" d="M31.6975,20.781a7.3117,7.3117,0,0,1-3.0456-5.8955,7.5631,7.5631,0,0,1,7.6947-7.424,7.7334,7.7334,0,0,1,7.689,7.1139c.1765,3.1324.0058,6.3177.0058,9.455v1.7054c1.5,1.79,4.0184,5.4063,5.919,15.99.4,2.2264,4.4292,12.201,4.7353,15.99-.7893.3807-1.5784,1.9036-2.3677,2.2843-.4122-1.7023-4.8688-12.1253-7.1028-13.7057a8.471,8.471,0,0,0-2.3676-1.1421c-2.1077-.71-3.9029-1.3173-5.429-1.89a6.0469,6.0469,0,0,1-2.8577.7475c-4.5765,0-8.2866-5.3692-8.2866-11.9924C26.2843,26.8587,28.54,22.4737,31.6975,20.781Z"/><path fill="#f1b31c" d="M27.8238,16.864l-.003-.0145,1.7367,2.2186a3.4693,3.4693,0,0,1-5.3388-.749Z"/><path fill="#1e50a0" d="M30.962,27.6954c-.0026.1084-.0181.2156-.0178.3242a11.7726,11.7726,0,0,0,.9309,4.5612,19.4463,19.4463,0,0,0,5.5989,7.0507A25.4882,25.4882,0,0,0,44.38,43.8307a23.78,23.78,0,0,0,5.1828,1.3938c.2907,1.1925.9688,3.3188.6421,4.1158-.55,1.3419-5.7909-.4749-6.967-.941A25.4938,25.4938,0,0,1,36.3318,44.2a19.4484,19.4484,0,0,1-5.5989-7.0507,11.7731,11.7731,0,0,1-.9308-4.5613A10.3962,10.3962,0,0,1,30.962,27.6954Z"/><path fill="#fcea2b" d="M28.7246,10.9187a7.3027,7.3027,0,0,0-.8762,5.9453L23.08,18.779A7.48,7.48,0,0,1,23,17.7408,6.6464,6.6464,0,0,1,28.7246,10.9187Z"/><path fill="#fff" d="M31,10c-.1248-.0181-.2732-.02-.4079-.0312A7.2164,7.2164,0,0,0,31.6974,20.781c-.0874.0469-.1714.1034-.2575.1544A8.1279,8.1279,0,0,0,37,18a6.5956,6.5956,0,0,0,1-2C37.6238,15.2173,35.3359,10.63,31,10Z"/></g><g id="parrotline"><path fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M27.8484,16.864,23.08,18.779A7.48,7.48,0,0,1,23,17.7408a6.6464,6.6464,0,0,1,5.7246-6.8221"/><path fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M52.769,53.4211a24.8711,24.8711,0,0,1,.9267,4.2946c-.7615.3807-1.5229,1.9036-2.2843,2.2843a50.4224,50.4224,0,0,0-2.282-5.8286C48.4063,52.548,47.48,51.4162,46.6957,50"/><path fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M29.5575,19.0681a3.4693,3.4693,0,0,1-5.3388-.749"/><line x1="34.6957" x2="34.6957" y1="45" y2="52" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/><line x1="57.0873" x2="61" y1="52" y2="52" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/><line x1="13" x2="42.9895" y1="52.1722" y2="52.1722" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/><path fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M34.2793,44.01c-4.4155,0-7.995-5.3692-7.995-11.9924,0-5.1589,2.1758-9.5439,5.2226-11.2366A7.4106,7.4106,0,0,1,35.9924,7.4615a7.5768,7.5768,0,0,1,7.4184,7.1139c.12,2.2168.0732,4.46.0353,6.6942-.0156.9227-.03,1.8438-.03,2.7608v1.7054"/><path fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M31.6974,20.781c-.0874.0469-.1714.1034-.2575.1544A8.1279,8.1279,0,0,0,37,18a6.5956,6.5956,0,0,0,1-2c-.3762-.7827-2.6641-5.37-7-6-.1248-.0181-.2732-.02-.4079-.0312"/><line x1="40.6957" x2="40.6957" y1="48" y2="52" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></g></svg>`;
+  /* ---------- Chart 5: The bad-word filter (paper §4.1) ---------- */
+  function filterChart(sel) {
+    const { g, innerW, innerH } = svgRoot(sel);
+    header(g, "Filtered silence", "A list of ~400 “bad words” decides which web pages never reach the model");
+
+    g.append("text").attr("class", "c-huge").attr("x", 0).attr("y", 30).attr("fill", C.gold).text("~400");
+    g.append("text").attr("class", "c-label").attr("x", 110).attr("y", 14).text("“Dirty, Naughty, Obscene or Otherwise Bad Words”");
+    g.append("text").attr("class", "c-label").attr("x", 110).attr("y", 34).text("mostly sexual terms, plus a handful of slurs");
+
+    const pages = [
+      { t: "Pornography site", s: "contains listed words", intended: true },
+      { t: "Hate-speech forum", s: "contains listed words", intended: true },
+      { t: "LGBTQ+ community blog", s: "uses reclaimed words like “twink”", intended: false },
+      { t: "Local cooking blog", s: "no listed words", keep: true },
+    ];
+    const top = 70, gap = 14, ch = Math.min(92, (innerH - top - 60 - gap * 3) / 4);
+    let on = false;
+    const rowG = g.selectAll("g.page").data(pages).enter().append("g").attr("class", "page")
+      .attr("transform", (d, i) => `translate(0,${top + i * (ch + gap)})`);
+    const rects = rowG.append("rect").attr("width", innerW).attr("height", ch).attr("rx", 10)
+      .attr("fill", "rgba(255,255,255,0.06)").attr("stroke", "rgba(255,255,255,0.18)");
+    const titles = rowG.append("text").attr("class", "c-head").attr("x", 18).attr("y", ch / 2 - 4).text(d => d.t);
+    rowG.append("text").attr("class", "c-label").attr("x", 18).attr("y", ch / 2 + 18).text(d => d.s);
+    const badge = rowG.append("text").attr("class", "c-val").attr("x", innerW - 16).attr("y", ch / 2 + 6)
+      .attr("text-anchor", "end").attr("opacity", 0);
+
+    const bt = top + 4 * (ch + gap) + 6;
+    const btn = g.append("g").attr("transform", `translate(0,${bt})`).style("cursor", "pointer");
+    const btnR = btn.append("rect").attr("width", 190).attr("height", 38).attr("rx", 19).attr("fill", "rgba(255,255,255,0.1)").attr("stroke", C.gold);
+    const btnT = btn.append("text").attr("class", "c-val").attr("x", 95).attr("y", 24).attr("text-anchor", "middle").attr("fill", C.gold);
+    const verdict = g.append("text").attr("class", "c-label").attr("x", 210).attr("y", bt + 24).attr("fill", C.red);
+
+    function apply(animate) {
+      const tr = s => animate ? s.transition().duration(600) : s;
+      tr(rowG).attr("opacity", d => on && !d.keep ? 0.3 : 1);
+      tr(rects).attr("stroke", d => on && !d.keep ? (d.intended ? C.grey : C.red) : "rgba(255,255,255,0.18)")
+        .attr("stroke-width", d => on && d.intended === false ? 3 : 1);
+      badge.attr("opacity", on ? 1 : 0)
+        .attr("fill", d => d.keep ? C.teal : d.intended ? C.grey : C.red)
+        .text(d => d.keep ? "kept ✓" : d.intended ? "removed (intended)" : "removed — voices lost");
+      titles.style("text-decoration", d => on && !d.keep ? "line-through" : "none");
+      btnT.text(on ? "Filter: ON  (click to undo)" : "Turn the filter ON");
+      btnR.attr("fill", on ? "rgba(255,209,102,0.2)" : "rgba(255,255,255,0.1)");
+      verdict.text(on ? "A community's own voice is erased." : "");
+    }
+    btn.on("click", () => { on = !on; apply(true); });
+    apply(false);
+    g.append("text").attr("class", "c-src").attr("x", 0).attr("y", innerH + 20).text("Example pages are illustrative.");
+    source(g, innerH, "Bender et al. 2021, §4.1 (C4 corpus)");
+    return { step() { setTimeout(() => { if (!on) { on = true; apply(true); } }, 900); } };
+  }
 
   function parrotChart(sel) {
     const { svg, g, w, h } = svgRoot(sel);
+    header(g, "The fluent parrot", "It sounds confident — but there is no understanding behind the words");
     // g is already translated by the chart margins → centre within the
     // inner area, not the raw viewport.
     const cx = (w - M.left - M.right) / 2;
@@ -369,7 +345,7 @@ const Charts = (() => {
     // subtle gridlines behind ("patterns in noise")
     const grid = g.append("g").attr("class", "gridlines").attr("opacity", 0.1).attr("stroke", "#9aa5b8").attr("fill", "none");
     for (let n = -7; n <= 7; n++) {
-      grid.append("line").attr("x1", n * 26 + baseX).attr("y1", baseY - 6 * R).attr("x2", n * 26 + baseX).attr("y2", baseY + 4 * R);
+      grid.append("line").attr("x1", n * 26 + baseX).attr("y1", baseY - 2 * R).attr("x2", n * 26 + baseX).attr("y2", baseY + 4 * R);
     }
 
     // The OpenMoji parrot spans roughly x:[11,62], y:[4.5,57] in a 72-box
@@ -446,7 +422,8 @@ const Charts = (() => {
 
     function renderState(st) {
       const hollow = st.kind === "hollow";
-      bubble.transition().duration(300).attr("opacity", 0).ease(d3.easeLinear).end()
+      bubble.interrupt().transition().duration(300).attr("opacity", 0).ease(d3.easeLinear).end()
+        .catch(() => {})
         .then(() => {
           bubble
             .text(st.text)
@@ -484,25 +461,17 @@ const Charts = (() => {
     };
   }
 
-  /* ---------- Chart 7: Next-word autocomplete simulator (@Erik) ----------
-     Interactive: the user clicks a candidate word; the parrot "accepts" it
-     and immediately predicts the next one. Static illustrative data —
-     no API, no backend.
-  ----------------------------------------------------------------------- */
   function autocompleteChart(sel) {
-    const { g, w, h } = svgRoot(sel);
-    const innerW = w - M.left - M.right;
-    const innerH = h - M.top - M.bottom;
-
-    g.append("text").attr("class", "chart-title").attr("x", 0).attr("y", -M.top + 30).text("Next-word roulette");
-    g.append("text").attr("class", "stage-label").attr("x", 0).attr("y", -M.top + 52)
-      .text("Pick a candidate — the model only ever picks the *likely* word");
+    const { g, innerW, innerH } = svgRoot(sel);
+    header(g, "Next-word roulette", "Click a candidate. The model only ever picks what is likely, never what is true.");
+    g.append("text").attr("class", "c-src").attr("x", 0).attr("y", innerH + 44).text("Probabilities are illustrative, not from the paper.");
 
     // --- current sentence (chips) ---
     const sentenceG = g.append("g").attr("transform", `translate(0, 40)`);
     const chips = sentenceG.selectAll("text").data([AUTOCOMPLETE_STEPS[0].sentence])
       .enter().append("text")
-      .attr("class", "chart-title")
+      .attr("class", "c-head")
+      .style("font-size", "26px")
       .attr("x", 0).attr("y", 0)
       .text(d => d);
 
@@ -582,7 +551,7 @@ const Charts = (() => {
         // finished: hollow punchline
         candG.selectAll("*").remove();
         candG.append("text")
-          .attr("class", "chart-title")
+          .attr("class", "c-head")
           .attr("x", 0).attr("y", barH)
           .attr("fill", "#f05c7a")
           .style("font-style", "italic")
@@ -611,96 +580,29 @@ const Charts = (() => {
     return { step() { /* user-driven interaction; scroll step keeps state */ } };
   }
 
-  /* ---------- Chart 8: Case-study cards (@Robin placeholder) ----------
-     Simple static preview of the three failure cases from §6.2.
-     TODO(Robin): replace with an interactive flip-card carousel.
-  --------------------------------------------------------------------- */
-  function caseCardsChart(sel) {
-    const { g, w, h } = svgRoot(sel);
-    const innerW = w - M.left - M.right;
-    const innerH = h - M.top - M.bottom;
-
-    g.append("text").attr("class", "chart-title").attr("x", 0).attr("y", -M.top + 30).text("When fluent text goes wrong");
-
-    const cases = [
-      { title: "Wrongful arrest", body: "“good morning” → “attack them”: a mistranslation had real consequences." },
-      { title: "Bot propaganda", body: "Endless plausible posts, faking human crowds for extremism." },
-      { title: "Privacy leaks", body: "Memorised training data regurgitated on request." },
-    ];
-    const cardW = Math.min(200, (innerW - 40) / 3), cardH = Math.min(190, innerH * 0.5);
-    const gap = 24;
-
-    const cardG = g.append("g").selectAll("g.card")
-      .data(cases).enter()
-      .append("g")
-      .attr("class", "card")
-      .attr("transform", (d, i) => `translate(${i * (cardW + gap)},${(innerH - cardH) / 2})`);
-
-    cardG.append("rect")
-      .attr("width", cardW).attr("height", cardH)
-      .attr("rx", 12)
-      .attr("fill", "rgba(255,255,255,0.06)")
-      .attr("stroke", "rgba(255,255,255,0.25)");
-
-    cardG.append("text")
-      .attr("x", 16).attr("y", 34)
-      .attr("fill", "#ffd166")
-      .style("font-size", 15).style("font-weight", 700)
-      .text(d => d.title);
-
-    // simple word-wrapped body text
-    cardG.each(function (d) {
-      const words = d.body.split(" ");
-      const maxChars = 24;
-      let line = "", lineNo = 0;
-      const gSelf = d3.select(this);
-      words.forEach(word => {
-        if ((line + " " + word).trim().length > maxChars) {
-          gSelf.append("text").attr("x", 16).attr("y", 62 + lineNo * 18)
-            .attr("fill", "#cdd5e0").style("font-size", 12).text(line.trim());
-          line = word; lineNo += 1;
-        } else {
-          line = (line + " " + word).trim();
-        }
-      });
-      if (line) gSelf.append("text").attr("x", 16).attr("y", 62 + lineNo * 18)
-        .attr("fill", "#cdd5e0").style("font-size", 12).text(line.trim());
-    });
-
-    g.append("text")
-      .attr("x", 0).attr("y", (innerH + cardH) / 2 + 34)
-      .attr("fill", "#9aa5b8").style("font-size", 12)
-      .text("Cases from §6.2 of the paper · interactive cards coming soon");
-
-    return { step() { /* static preview */ } };
-  }
 
   /* ---------- Tooltip helpers ---------- */
   function showTip(ev, d) {
-    const tip = d3.select("#tooltip");
     const dataLabel = d.dataGB ? `${d.dataGB} GB` : "n/a";
-    tip.style("opacity", 1)
+    d3.select("#tooltip").style("opacity", 1)
       .html(`<strong>${d.name}</strong><span class="tt-sub">${d.year} · ${formatParams(d.params)} parameters</span><br>training data: ${dataLabel}`);
     moveTip(ev);
   }
   function moveTip(ev) {
-    d3.select("#tooltip")
-      .style("left", (ev.offsetX + 18) + "px")
-      .style("top", (ev.offsetY + 18) + "px");
+    d3.select("#tooltip").style("left", (ev.clientX + 16) + "px").style("top", (ev.clientY + 16) + "px");
   }
   function hideTip() { d3.select("#tooltip").style("opacity", 0); }
 
   function formatParams(n) {
-    if (n >= 1e12) return (n / 1e12).toFixed(1) + " trillion";
+    if (n >= 1e12) return (n / 1e12).toFixed(2) + " trillion";
     if (n >= 1e9) return (n / 1e9).toFixed(0) + " billion";
     if (n >= 1e6) return (n / 1e6).toFixed(0) + " million";
     return n;
   }
   function rScale(params) {
-    // log-scaled radius so bubbles are readable
-    const t = (Math.log10(params) - 7) / (12.5 - 7); // ~1e7 -> 3e12
-    return 8 + t * 42;
+    const t = (Math.log10(params) - 7) / (12.5 - 7);
+    return 7 + t * 30;
   }
 
-  return { bubbleChart, co2Chart, computeChart, whoChart, filterChart, parrotChart, autocompleteChart, caseCardsChart };
+  return { bubbleChart, co2Chart, computeChart, justiceChart, whoChart, filterChart, parrotChart, autocompleteChart, caseCardsChart };
 })();

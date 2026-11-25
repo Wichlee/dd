@@ -10,6 +10,7 @@
 
 * { box-sizing: border-box; }
 
+body { overflow-x: hidden; }
 html, body {
   margin: 0;
   padding: 0;
@@ -81,12 +82,15 @@ h1, h2 {
   top: 0;
   height: 100vh;
   width: 100%;
+  margin-bottom: -100vh;
   background: var(--bg);
   z-index: 1;
 }
 #chart {
   position: absolute;
-  inset: 0;
+  top: 0; bottom: 0; right: 0; left: 44%;
+  border-left: 1px solid var(--line);
+  background: radial-gradient(700px 400px at 70% 20%, rgba(255,209,102,0.05), transparent 70%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -106,8 +110,8 @@ h1, h2 {
   max-width: none;
 }
 .chapter-content {
-  max-width: 460px;
-  background: rgba(13,15,20,0.82);
+  max-width: 440px;
+  background: rgba(21,26,36,0.96);
   backdrop-filter: blur(6px);
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -137,7 +141,8 @@ h1, h2 {
 }
 
 /* Wider content box (e.g. comparison table in Section 5) */
-.chapter-content.wide { max-width: 620px; }
+.chapter-content.wide { max-width: 600px; }
+.chapter { padding-left: 3vw; }
 
 /* Comparison table (Paths Forward) */
 .compare {
@@ -195,11 +200,18 @@ h1, h2 {
   text-transform: uppercase;
   fill: var(--muted);
 }
-.chart-title {
+.chart-title, .c-title {
   font-family: "Newsreader", Georgia, serif;
-  font-size: 22px;
+  font-size: 28px;
   fill: var(--ink);
 }
+.c-sub { font-size: 14px; fill: var(--muted); }
+.c-label { font-size: 13px; fill: var(--muted); }
+.c-head { font-size: 17px; font-weight: 700; fill: var(--ink); }
+.c-val { font-size: 15px; font-weight: 700; fill: #10141c; }
+.c-big { font-family: "Newsreader", Georgia, serif; font-size: 24px; }
+.c-huge { font-family: "Newsreader", Georgia, serif; font-size: 44px; }
+.c-src { font-size: 11px; fill: var(--muted); }
 .bubble { cursor: pointer; transition: opacity 0.3s ease; }
 
 /* Tooltip */
@@ -223,7 +235,10 @@ h1, h2 {
 
 /* ---------- RESPONSIVE ---------- */
 @media (max-width: 760px) {
-  #chart-stage { height: 60vh; }
+  #chart-stage { height: 55vh; }
+  #chart { left: 0; border-left: none; }
+  .chapter { padding-left: 1rem; margin-top: 55vh; min-height: 60vh; align-items: flex-start; }
+  #chapters { margin-top: 0; }
   .chapter { padding: 3rem 1rem; }
   .chapter-content { padding: 1.3rem 1.4rem; }
   .hero h1 { font-size: 3rem; }

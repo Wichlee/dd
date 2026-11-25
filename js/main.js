@@ -35,17 +35,17 @@ function buildCharts() {
   return [
     { idx: 0, render: "bubbleChart", step: 2019 },
     { idx: 1, render: "bubbleChart", step: 2021 },
-    { idx: 2, render: "parrotChart", step: null },
-    { idx: 3, render: "autocompleteChart", step: null },
-    { idx: 4, render: "parrotChart", step: null },
-    { idx: 5, render: "co2Chart", step: null },
-    { idx: 6, render: "computeChart", step: null },
-    { idx: 7, render: "co2Chart", step: null },
-    { idx: 8, render: "whoChart", step: null },
-    { idx: 9, render: "filterChart", step: null },
-    { idx: 10, render: "caseCardsChart", step: null },
-    { idx: 11, render: "caseCardsChart", step: null },
-    { idx: 12, render: null, step: null }, // HTML comparison table, keep chart
+    { idx: 2, render: "parrotChart", step: 1 },
+    { idx: 3, render: "autocompleteChart", step: 1 },
+    { idx: 4, render: "parrotChart", step: 1 },
+    { idx: 5, render: "co2Chart", step: 1 },
+    { idx: 6, render: "computeChart", step: 1 },
+    { idx: 7, render: "justiceChart", step: 1 },
+    { idx: 8, render: "whoChart", step: 1 },
+    { idx: 9, render: "filterChart", step: 1 },
+    { idx: 10, render: "caseCardsChart", step: 1 },
+    { idx: 11, render: "caseCardsChart", step: 1 },
+    { idx: 12, render: "parrotChart", step: 1 },
   ];
 }
 
@@ -58,14 +58,14 @@ function init() {
 
   function show(entry) {
     if (current && current.render === entry.render) {
-      if (entry.step) current.instance.step(entry.step);
+      current.instance.step(entry.step);
       return;
     }
     // teardown old chart, build new one
     const factory = Charts[entry.render];
     if (!factory) return;
     current = { render: entry.render, instance: factory(d3.select(stage)) };
-    if (entry.step) current.instance.step(entry.step);
+    current.instance.step(entry.step);
   }
 
   const scroller = scrollama();
