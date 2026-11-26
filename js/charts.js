@@ -93,7 +93,7 @@ const Charts = (() => {
       step(t) {
         t = t || 2021;
         nodes.transition().duration(700).attr("opacity", d => d.year <= t ? 1 : 0);
-        readout.text(t === 2021 ? "BERT → Switch-C: ≈4,600×" : "2019: hundreds of millions");
+        readout.text(t === 2021 ? "BERT → Switch-C: ≈4,600×" : "2019: from 66M to 8.3B parameters");
       },
     };
   }
@@ -101,7 +101,7 @@ const Charts = (() => {
   /* ---------- Chart 2: CO₂ (paper §3) ---------- */
   function co2Chart(sel) {
     const { g, innerW, innerH } = svgRoot(sel);
-    header(g, "The carbon bill of one training run", "Tonnes of CO₂ — compared with a person's yearly emissions");
+    header(g, "The carbon bill of one training run", "Tonnes of CO₂e — compared with a person's yearly emissions");
 
     const rows = [
       { label: "Average person, 1 year", v: COST_FACTS.humanYearCO2, color: C.grey },
@@ -166,7 +166,7 @@ const Charts = (() => {
       .attr("fill", "none").attr("stroke", color).attr("stroke-width", dash ? 2 : 4).attr("stroke-dasharray", dash || null);
     const lm = mk("lm", C.gold), moore = mk("moore", C.grey, "5 5");
     g.append("text").attr("class", "c-label").attr("fill", C.gold).attr("x", x(3.2)).attr("y", y(300) - 14).attr("text-anchor", "end").text("largest language models: ×300,000");
-    g.append("text").attr("class", "c-label").attr("x", x(4.2)).attr("y", y(30) + 20).text("Moore's law (2× / 18 months ≈ ×16)");
+    g.append("text").attr("class", "c-label").attr("x", x(4.2)).attr("y", y(30) + 20).text("Moore's law: ≈ ×16 in 6 years (illustrative comparison)");
     const dot = g.append("circle").attr("cx", x(6)).attr("cy", y(300000)).attr("r", 7).attr("fill", C.gold).attr("opacity", 0);
 
     const ty = hl + 70;
@@ -560,7 +560,7 @@ const Charts = (() => {
           .attr("x", 0).attr("y", barH + 40)
           .attr("fill", "#9aa5b8")
           .style("font-size", 13)
-          .text("Model's understanding of the sentence so far: 0%");
+          .text("Model's understanding of the sentence so far: 0% (illustrative)");
         candG.append("text")
           .attr("x", 0).attr("y", barH + 64)
           .attr("fill", "#ffd166")
