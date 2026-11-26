@@ -447,16 +447,33 @@ const Charts = (() => {
 
     renderState(states[0]);
 
+    // step(s): 0 = auto-cycle the confident lines; 4/5 = fixed "hollow" lines
+    let timer = null;
+    function show(i) {
+      idx = i;
+      renderState(states[idx]);
+      const hollow = states[idx].kind === "hollow";
+      parrotG.transition().duration(500)
+        .style("filter", hollow ? "grayscale(1) brightness(0.8)" : "none")
+        .attr("opacity", hollow ? 0.6 : 1);
+      hopG.interrupt()
+        .transition().duration(140).ease(d3.easeQuadOut)
+        .attr("transform", "translate(0,-8)")
+        .transition().duration(200)
+        .attr("transform", "translate(0,0)");
+    }
+
     return {
-      step() {
-        idx = (idx + 1) % states.length;
-        renderState(states[idx]);
-        // small hop on the inner layer (independent of the CSS sway)
-        hopG.interrupt()
-          .transition().duration(140).ease(d3.easeQuadOut)
-          .attr("transform", "translate(0,-8)")
-          .transition().duration(200)
-          .attr("transform", "translate(0,0)");
+      step(s) {
+        if (timer) { clearInterval(timer); timer = null; }
+        s = s || 0;
+        show(s);
+        if (s === 0) {
+          timer = setInterval(() => {
+            if (!g.node().isConnected) { clearInterval(timer); return; }
+            show((idx + 1) % 4);
+          }, 2400);
+        }
       },
     };
   }

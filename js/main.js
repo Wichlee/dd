@@ -36,9 +36,9 @@ function buildCharts() {
   return [
     { idx: 0, render: "bubbleChart", step: 2019 },
     { idx: 1, render: "bubbleChart", step: 2021 },
-    { idx: 2, render: "parrotChart", step: 1 },
+    { idx: 2, render: "parrotChart", step: 0 },
     { idx: 3, render: "autocompleteChart", step: 1 },
-    { idx: 4, render: "parrotChart", step: 1 },
+    { idx: 4, render: "parrotChart", step: 4 },
     { idx: 5, render: "birthChart", step: 1 },
     { idx: 6, render: "birthChart", step: 2 },
     { idx: 7, render: "birthChart", step: 3 },
@@ -50,7 +50,7 @@ function buildCharts() {
     { idx: 13, render: "filterChart", step: 1 },
     { idx: 14, render: "caseCardsChart", step: 1 },
     { idx: 15, render: "caseCardsChart", step: 1 },
-    { idx: 16, render: "parrotChart", step: 1 },
+    { idx: 16, render: "parrotChart", step: 5 },
     { idx: 17, render: "faqChart", step: 1 },
   ];
 }
