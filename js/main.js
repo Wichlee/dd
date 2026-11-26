@@ -29,8 +29,9 @@ async function boot() {
 /* Map each chapter index -> chart + step.
    Order follows the outline:
    [0-1] Hero/scale (@Erik) · [2-4] Parrot section (@Erik)
-   [5-7] Environment (@Leo) · [8-9] Data & bias (@Maria)
-   [10-11] Harms (@Robin)  · [12] Paths forward (all, HTML table) */
+   [5-8] How parrots are born — 4 steps (@Erik)
+   [9-11] Environment (@Leo) · [12-13] Data & bias (@Maria)
+   [14-15] Harms (@Robin) · [16-17] Paths forward (all: table + FAQ) */
 function buildCharts() {
   return [
     { idx: 0, render: "bubbleChart", step: 2019 },
@@ -38,14 +39,19 @@ function buildCharts() {
     { idx: 2, render: "parrotChart", step: 1 },
     { idx: 3, render: "autocompleteChart", step: 1 },
     { idx: 4, render: "parrotChart", step: 1 },
-    { idx: 5, render: "co2Chart", step: 1 },
-    { idx: 6, render: "computeChart", step: 1 },
-    { idx: 7, render: "justiceChart", step: 1 },
-    { idx: 8, render: "whoChart", step: 1 },
-    { idx: 9, render: "filterChart", step: 1 },
-    { idx: 10, render: "caseCardsChart", step: 1 },
-    { idx: 11, render: "caseCardsChart", step: 1 },
-    { idx: 12, render: "parrotChart", step: 1 },
+    { idx: 5, render: "birthChart", step: 1 },
+    { idx: 6, render: "birthChart", step: 2 },
+    { idx: 7, render: "birthChart", step: 3 },
+    { idx: 8, render: "birthChart", step: 4 },
+    { idx: 9, render: "co2Chart", step: 1 },
+    { idx: 10, render: "computeChart", step: 1 },
+    { idx: 11, render: "justiceChart", step: 1 },
+    { idx: 12, render: "whoChart", step: 1 },
+    { idx: 13, render: "filterChart", step: 1 },
+    { idx: 14, render: "caseCardsChart", step: 1 },
+    { idx: 15, render: "caseCardsChart", step: 1 },
+    { idx: 16, render: "parrotChart", step: 1 },
+    { idx: 17, render: "faqChart", step: 1 },
   ];
 }
 

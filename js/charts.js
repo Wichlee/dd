@@ -604,5 +604,130 @@ const Charts = (() => {
     return 7 + t * 30;
   }
 
-  return { bubbleChart, co2Chart, computeChart, justiceChart, whoChart, filterChart, parrotChart, autocompleteChart, caseCardsChart };
+  /* ---------- Chart: How parrots are born (4-step pipeline, §1 @Erik) ---------- */
+  /* The parrot physically travels through the "assembly line" as you scroll:
+     01 Collect the web → 02 Train at scale → 03 Generate fluency → 04 Impute understanding.
+     Step 4 is a paraphrase of the paper's own narrative arc (§1, §5, §6.1). */
+  function birthChart(sel) {
+    const { innerW, innerH, g } = svgRoot(sel);
+    header(g, "How parrots are born", "Four steps from raw text to fluent, meaningless speech");
+    const compact = innerW < 560;
+
+    const steps = [
+      { n: "01", title: "Collect the web", color: C.blue },
+      { n: "02", title: "Train at scale", color: C.teal },
+      { n: "03", title: "Generate fluency", color: C.orange },
+      { n: "04", title: "Impute understanding", color: C.gold },
+    ];
+    const n = steps.length;
+    const pad = compact ? 26 : 54;
+    const sx = d3.scalePoint().domain(d3.range(n)).range([pad, innerW - pad]);
+    const beltY = Math.min(innerH * (compact ? 0.55 : 0.5), innerH - 92);
+    const r = compact ? 34 : 48;
+    const numF = compact ? 18 : 26;
+    const titleF = compact ? 11 : 13.5;
+
+    // belt + animated dashes flowing towards the parrot
+    g.append("line").attr("x1", sx(0)).attr("y1", beltY).attr("x2", sx(n - 1)).attr("y2", beltY)
+      .attr("stroke", "rgba(255,255,255,0.16)").attr("stroke-width", 2);
+    const flow = g.append("line").attr("x1", sx(0)).attr("y1", beltY).attr("x2", sx(n - 1)).attr("y2", beltY)
+      .attr("stroke", C.orange).attr("stroke-width", 2).attr("stroke-linecap", "round")
+      .attr("stroke-dasharray", "8 22").attr("opacity", 0.75);
+    (function flowLoop() {
+      flow.transition().duration(1400).ease(d3.easeLinear).attr("stroke-dashoffset", -30)
+        .on("end", () => { flow.attr("stroke-dashoffset", 0); flowLoop(); });
+    })();
+
+    const stations = g.selectAll("g.station").data(steps).enter().append("g").attr("class", "station")
+      .attr("transform", (d, i) => `translate(${sx(i)},${beltY})`);
+    stations.append("circle").attr("r", r)
+      .attr("fill", "rgba(255,255,255,0.04)")
+      .attr("stroke", "rgba(255,255,255,0.2)");
+    stations.append("text").attr("class", "c-big").attr("text-anchor", "middle").attr("y", 5)
+      .attr("font-size", numF).attr("fill", C.grey).text(d => d.n);
+    stations.append("text").attr("text-anchor", "middle").attr("y", r + 14)
+      .attr("font-size", titleF).attr("fill", C.ink).text(d => d.title);
+    if (!compact) {
+      stations.append("text").attr("text-anchor", "middle").attr("y", r + 32)
+        .attr("font-size", 10.5).attr("fill", C.grey)
+        .each(function (d) { wrap(d3.select(this), 0, r + 32, 30, 12); });
+    }
+
+    // the parrot that travels through the pipeline
+    const R = compact ? 22 : Math.min(44, innerH * 0.16);
+    const VB_W = 51, VB_H = 52.5, originX = 11, originY = 4.5;
+    const scale = (R * 1.25) / (VB_W / 2);
+    const parrotG = g.append("g").attr("class", "parrot-g");
+    const innerG = parrotG.append("g")
+      .attr("transform", `translate(${-(originX + VB_W / 2) * scale},${-(originY + VB_H / 2) * scale}) scale(${scale})`);
+    const artDoc = new DOMParser().parseFromString(PARROT_SVG, "image/svg+xml");
+    innerG.node().appendChild(document.importNode(artDoc.documentElement, true));
+
+    const bubble = g.append("text").attr("text-anchor", "middle")
+      .attr("x", sx(3)).attr("y", beltY + r + (compact ? 34 : 78))
+      .attr("fill", C.red).style("font-family", "Newsreader, Georgia, serif")
+      .style("font-size", compact ? 13 : 17).attr("opacity", 0)
+      .text("…but without any reference to meaning.");
+
+    function setActive(idx, animate) {
+      const dur = animate ? 600 : 0;
+      stations.select("circle").transition().duration(dur)
+        .attr("fill", (d, i) => i <= idx ? d.color : "rgba(255,255,255,0.04)")
+        .attr("fill-opacity", (d, i) => i < idx ? 0.22 : i === idx ? 0.32 : 1)
+        .attr("stroke", (d, i) => i === idx ? "#e8ecf3" : i < idx ? d.color : "rgba(255,255,255,0.2)")
+        .attr("stroke-width", (d, i) => i === idx ? 3 : 1.5);
+      stations.selectAll("text").transition().duration(dur)
+        .attr("fill", (d, i) => i < idx ? C.teal : i === idx ? "#fff" : C.grey);
+      const tx = sx(idx), ty = beltY - R * 1.35;
+      if (animate) {
+        parrotG.interrupt().transition().duration(900).ease(d3.easeCubicInOut)
+          .attr("transform", `translate(${tx},${ty})`);
+      } else {
+        parrotG.attr("transform", `translate(${tx},${ty})`);
+      }
+      bubble.interrupt().transition().duration(400).attr("opacity", idx === 3 ? 1 : 0);
+    }
+
+    setActive(0, false);
+    return {
+      step(s) {
+        const idx = Math.max(0, Math.min(n - 1, (s || 1) - 1));
+        setActive(idx, true);
+      },
+    };
+  }
+
+  /* ---------- Chart: Closing question (Paths Forward, owners ALL) ---------- */
+  function faqChart(sel) {
+    const { g, innerW, innerH } = svgRoot(sel);
+    header(g, "Is bigger inevitable?", "The closing challenge of the paper");
+    const compact = innerW < 560;
+    const x = innerW / 2;
+    const body = g.append("g").attr("opacity", 0);
+
+    body.append("text").attr("class", "c-huge").attr("x", x).attr("y", innerH * 0.3)
+      .attr("text-anchor", "middle").attr("font-size", compact ? 66 : 110).attr("fill", C.orange).text("?");
+
+    const qY = innerH * 0.3 + (compact ? 74 : 128);
+    const quote = body.append("text").attr("x", x).attr("y", qY)
+      .attr("text-anchor", "middle")
+      .style("font-family", "Newsreader, Georgia, serif")
+      .style("font-size", compact ? 16 : 21)
+      .attr("fill", C.ink);
+    quote.selectAll("tspan").data([
+      "“It may seem like progress depends on the",
+      "creation of ever larger language models.”",
+    ]).enter().append("tspan")
+      .attr("x", x).attr("y", (d, i) => qY + i * (compact ? 22 : 28))
+      .attr("text-anchor", "middle").text(d => d);
+
+    body.append("text").attr("x", x).attr("y", qY + (compact ? 62 : 86))
+      .attr("text-anchor", "middle").attr("font-size", compact ? 11 : 13)
+      .attr("fill", C.grey).text("The paper asks us to look for other answers → §7 Paths Forward");
+    source(g, innerH, "Bender et al. 2021, §8 (conclusion)");
+
+    return { step() { body.transition().duration(800).attr("opacity", 1); } };
+  }
+
+  return { bubbleChart, co2Chart, computeChart, justiceChart, whoChart, filterChart, parrotChart, autocompleteChart, caseCardsChart, birthChart, faqChart };
 })();
