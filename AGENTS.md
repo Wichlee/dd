@@ -146,14 +146,34 @@ looks like it came from one hand:
    (known limitation: the 55vh mobile stage is partly covered by cards —
    agreed to revisit as a team; don't redesign it solo).
 
-## Git
+## Git workflow (branches + Pull Requests)
 
-- Branch: `main` only, small commits, imperative summary line
+**Never commit to `main` directly.** `main` is Erik's integration branch and
+the deploy branch. Work on your own branch and open a Pull Request on GitHub —
+Erik reviews and merges it. This protects everyone's work.
+
+```bash
+git switch main && git pull origin main
+git switch -c feature/leo-environment   # one branch per owner, e.g.
+                                        # feature/maria-data, feature/robin-harms
+# ... work, commit small ...
+git push -u origin feature/leo-environment
+# GitHub prints a "Create a pull request" link → open the PR,
+# or do it on github.com → Pull requests → New pull request.
+# base: main, compare: your branch.
+```
+
+- **Pull Request, not `git push origin main`.** Pushing to `main` would deploy
+  to GitHub Pages immediately, unreviewed.
+- Small, frequent commits with imperative summary lines
   (e.g. `Environment: fix CO2e units and add comparator interaction`).
-- Push to `origin main` — that *is* the deploy. Never force-push.
+- Never force-push, to any branch.
 - Commit only your own section's files (+ the shared file you necessarily
-  touched). If your commit would conflict with another owner's work, stop and
-  talk to the team (Erik coordinates).
+  touched, mention it in the PR description). If your PR conflicts with
+  another owner's work, don't resolve it silently — ask in the PR / talk to
+  Erik.
+- If your change is still unfinished, prefix the PR title with **WIP:** so
+  Erik knows not to merge it yet.
 - Fact-check disputes or cross-section ideas → team meeting, not drive-by
   edits.
 
