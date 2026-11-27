@@ -499,16 +499,16 @@ const Charts = (() => {
 
     // --- the parrot (standing in for the LLM) says the sentence you assemble ---
     const VB_W = 51, VB_H = 52.5, PCX = 36.5, PCY = 30.75;
-    const PH = compact ? 40 : Math.min(112, innerH * 0.3);
+    const PH = compact ? 40 : Math.min(210, innerH * 0.32);
     const pScale = PH / VB_H;
-    const parrotX = innerW - (compact ? 30 : 56);
-    const parrotY = compact ? 88 : 46;   // art-centre position
+    const parrotX = innerW - (compact ? 30 : 80);
+    const parrotY = compact ? 92 : Math.round(innerH * 0.45);   // art-centre position
     const parrotG = g.append("g").attr("transform", `translate(${parrotX},${parrotY})`);
     parrotG.append("g")
       .attr("transform", `scale(${pScale}) translate(${-PCX},${-PCY})`)
       .node().appendChild(document.importNode(
         new DOMParser().parseFromString(PARROT_SVG, "image/svg+xml").documentElement, true));
-    const beak = [parrotX - (VB_W / 2) * pScale - 2, parrotY - (VB_H / 2) * pScale * 0.7];
+    const beak = [parrotX - (VB_W / 2) * pScale * 0.55, parrotY - (VB_H / 2) * pScale * 0.52];
 
     // --- current sentence, rendered as the parrot's speech bubble ---
     const sentenceG = g.append("g").attr("transform", `translate(0, 40)`);
@@ -538,10 +538,13 @@ const Charts = (() => {
     layoutBubble();
 
     // --- candidate bars ---
-    const barX = 150;                    // bars start after the word labels
-    const barMaxW = Math.min(innerW - barX - 40, 320);
-    const barH = 30, barGap = 14;
-    const candG = g.append("g").attr("transform", `translate(0, 110)`);
+    // spread across the stage: bubble on top, bars centre-left, big parrot right
+    const barX = compact ? 128 : 170;    // bars start after the word labels
+    const barMaxW = compact ? Math.min(innerW - barX - 24, 190)
+                            : Math.min(innerW - barX - 170, 340);
+    const barH = compact ? 32 : 44, barGap = compact ? 16 : 26;
+    const candY = compact ? 150 : Math.round(innerH * 0.52);
+    const candG = g.append("g").attr("transform", `translate(0, ${candY})`);
 
     let sentence = START;
 
@@ -557,7 +560,7 @@ const Charts = (() => {
         .attr("y", (d, i) => i * (barH + barGap) + barH / 2)
         .attr("dy", "0.35em")
         .attr("fill", "#fff")
-        .style("font-size", 16)
+        .style("font-size", compact ? 16 : 18)
         .style("font-weight", 700)
         .text(d => d[0]);
 
@@ -584,7 +587,7 @@ const Charts = (() => {
         .attr("y", (d, i) => i * (barH + barGap) + barH / 2)
         .attr("dy", "0.35em")
         .attr("fill", "#10141c")
-        .style("font-size", 13)
+        .style("font-size", compact ? 13 : 15)
         .style("font-weight", 700)
         .style("pointer-events", "none")
         .text(d => d[1] + "%");
@@ -610,21 +613,25 @@ const Charts = (() => {
       if (AUTOCOMPLETE_STEPS[sentence]) {
         renderCandidates();
       } else {
-        // finished: hollow punchline
+        // finished: hollow punchline, centred on the stage
+        const endY = Math.round(innerH * 0.5) - candY;   // candG is already offset by candY
+        const lh = compact ? 18 : 22;
         candG.selectAll("*").remove();
-        candG.append("text")
+        const pl = candG.append("text")
           .attr("class", "c-head")
-          .attr("x", 0).attr("y", barH)
+          .attr("x", 0).attr("y", endY)
           .attr("fill", "#f05c7a")
           .style("font-style", "italic")
+          .style("font-size", (compact ? 15 : 19) + "px")
           .text(AUTOCOMPLETE_ENDING);
+        const plines = wrap(pl, 0, endY, compact ? 30 : 44, lh);
         candG.append("text")
-          .attr("x", 0).attr("y", barH + 40)
+          .attr("x", 0).attr("y", endY + plines * lh + 26)
           .attr("fill", "#9aa5b8")
           .style("font-size", 13)
           .text("Model's understanding of the sentence so far: 0% (illustrative)");
         candG.append("text")
-          .attr("x", 0).attr("y", barH + 64)
+          .attr("x", 0).attr("y", endY + plines * lh + 54)
           .attr("fill", "#ffd166")
           .style("font-size", 13)
           .style("cursor", "pointer")
