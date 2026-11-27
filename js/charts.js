@@ -508,6 +508,21 @@ const Charts = (() => {
       .attr("transform", `scale(${pScale}) translate(${-PCX},${-PCY})`)
       .node().appendChild(document.importNode(
         new DOMParser().parseFromString(PARROT_SVG, "image/svg+xml").documentElement, true));
+
+    // Eye ensemble on the near-side eye, same as parrotChart: the visible eye
+    // sits in the red head around the white glint at viewBox ≈ (33, 15).
+    const eyeSpot = [33, 15];
+    const eyeXY = [pScale * (eyeSpot[0] - PCX), pScale * (eyeSpot[1] - PCY)];
+    parrotG.append("circle")
+      .attr("cx", eyeXY[0]).attr("cy", eyeXY[1])
+      .attr("r", pScale * 2.2)
+      .attr("fill", "#fff").attr("stroke", "#10141c")
+      .attr("stroke-width", Math.max(1, pScale * 0.5));
+    parrotG.append("circle")
+      .attr("cx", eyeXY[0]).attr("cy", eyeXY[1])
+      .attr("r", pScale * 1.1)
+      .attr("fill", "#10141c");
+
     const beak = [parrotX - (VB_W / 2) * pScale * 0.55, parrotY - (VB_H / 2) * pScale * 0.52];
 
     // --- current sentence, rendered as the parrot's speech bubble ---
