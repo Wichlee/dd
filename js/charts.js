@@ -26,7 +26,11 @@ const Charts = (() => {
   /* Same title block on every chart → consistent look */
   function header(g, title, sub) {
     g.append("text").attr("class", "c-title").attr("x", 0).attr("y", -M.top + 38).text(title);
-    if (sub) g.append("text").attr("class", "c-sub").attr("x", 0).attr("y", -M.top + 62).text(sub);
+    if (!sub) return;
+    const t = g.append("text").attr("class", "c-sub").attr("x", 0).attr("y", -M.top + 62).text(sub);
+    // narrow charts (mobile): wrap the subtitle so it never clips at the right edge
+    const svgW = g.node().ownerSVGElement ? g.node().ownerSVGElement.viewBox.baseVal.width : 1200;
+    if (svgW < 560) wrap(t, 0, -M.top + 62, 34, 16);
   }
   function source(g, innerH, text) {
     g.append("text").attr("class", "c-src").attr("x", 0).attr("y", innerH + 44).text("Source: " + text);
@@ -481,17 +485,20 @@ const Charts = (() => {
 
   function autocompleteChart(sel) {
     const { g, innerW, innerH } = svgRoot(sel);
+    const START = "The doctor said";
     header(g, "Next-word roulette", "Click a candidate. The model only ever picks what is likely, never what is true.");
     g.append("text").attr("class", "c-src").attr("x", 0).attr("y", innerH + 44).text("Probabilities are illustrative, not from the paper.");
 
+    // longer sentences shrink so they never clip (the "that …" branches run long)
+    function chipSize(s) { return s.length > 44 ? 14 : s.length > 32 ? 17 : 26; }
+
     // --- current sentence (chips) ---
     const sentenceG = g.append("g").attr("transform", `translate(0, 40)`);
-    const chips = sentenceG.selectAll("text").data([AUTOCOMPLETE_STEPS[0].sentence])
-      .enter().append("text")
+    const chips = sentenceG.append("text")
       .attr("class", "c-head")
-      .style("font-size", "26px")
+      .style("font-size", chipSize(START) + "px")
       .attr("x", 0).attr("y", 0)
-      .text(d => d);
+      .text(START);
 
     // --- candidate bars ---
     const barX = 150;                    // bars start after the word labels
@@ -499,14 +506,14 @@ const Charts = (() => {
     const barH = 30, barGap = 14;
     const candG = g.append("g").attr("transform", `translate(0, 110)`);
 
-    let stepIdx = 0;
+    let sentence = START;
 
     function renderCandidates() {
-      const step = AUTOCOMPLETE_STEPS[stepIdx];
+      const options = AUTOCOMPLETE_STEPS[sentence];
       candG.selectAll("*").remove();
 
       candG.selectAll("text.label")
-        .data(step.options).enter()
+        .data(options).enter()
         .append("text")
         .attr("class", "label")
         .attr("x", 0)
@@ -518,7 +525,7 @@ const Charts = (() => {
         .text(d => d[0]);
 
       candG.selectAll("rect.bar")
-        .data(step.options).enter()
+        .data(options).enter()
         .append("rect")
         .attr("class", "bar")
         .attr("x", barX)
@@ -533,7 +540,7 @@ const Charts = (() => {
         .attr("width", d => (d[1] / 50) * barMaxW);
 
       candG.selectAll("text.pct")
-        .data(step.options).enter()
+        .data(options).enter()
         .append("text")
         .attr("class", "pct")
         .attr("x", barX + 8)
@@ -546,7 +553,7 @@ const Charts = (() => {
         .text(d => d[1] + "%");
 
       candG.selectAll("rect.hit")
-        .data(step.options).enter()
+        .data(options).enter()
         .append("rect")
         .attr("class", "hit")
         .attr("x", barX)
@@ -559,11 +566,10 @@ const Charts = (() => {
     }
 
     function pick(word) {
-      if (stepIdx >= AUTOCOMPLETE_STEPS.length) return;
-      const next = AUTOCOMPLETE_STEPS[stepIdx].sentence + " " + word;
-      chips.data([next]).text(next); // extend the sentence
-      stepIdx += 1;
-      if (stepIdx < AUTOCOMPLETE_STEPS.length) {
+      sentence = sentence + " " + word;
+      chips.data([sentence]).text(sentence);
+      chips.style("font-size", chipSize(sentence) + "px");
+      if (AUTOCOMPLETE_STEPS[sentence]) {
         renderCandidates();
       } else {
         // finished: hollow punchline
@@ -586,8 +592,9 @@ const Charts = (() => {
           .style("cursor", "pointer")
           .text("↺ play again")
           .on("click", () => {
-            stepIdx = 0;
-            chips.data([AUTOCOMPLETE_STEPS[0].sentence]).text(AUTOCOMPLETE_STEPS[0].sentence);
+            sentence = START;
+            chips.data([START]).text(START);
+            chips.style("font-size", chipSize(START) + "px");
             renderCandidates();
           });
       }
