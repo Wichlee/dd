@@ -630,9 +630,12 @@ const Charts = (() => {
   }
 
   /* ---------- Chart: How parrots are born (4-step pipeline, §1 @Erik) ---------- */
-  /* The parrot physically travels through the "assembly line" as you scroll:
-     01 Collect the web → 02 Train at scale → 03 Generate fluency → 04 Impute understanding.
-     Step 4 is a paraphrase of the paper's own narrative arc (§1, §5, §6.1). */
+  /* The pipeline as a literal birth: an egg (the unfiltered web inside) rides
+     the assembly line, cracks under training pressure, hatches into a grey
+     chick that babbles fluent fragments, and leaves the line as a full parrot
+     talking "…but without any reference to meaning." (§6.1).
+     Life stages: 01–02 egg, 03 chick, 04 parrot. The birth is our illustration
+     of the paper's narrative arc (§1, §6.1). */
   function birthChart(sel) {
     const { innerW, innerH, g } = svgRoot(sel);
     header(g, "How parrots are born", "Four steps from raw text to fluent, meaningless speech");
@@ -652,7 +655,7 @@ const Charts = (() => {
     const numF = compact ? 18 : 26;
     const titleF = compact ? 11 : 13.5;
 
-    // belt + animated dashes flowing towards the parrot
+    // belt + animated dashes flowing towards the creature
     g.append("line").attr("x1", sx(0)).attr("y1", beltY).attr("x2", sx(n - 1)).attr("y2", beltY)
       .attr("stroke", "rgba(255,255,255,0.16)").attr("stroke-width", 2);
     const flow = g.append("line").attr("x1", sx(0)).attr("y1", beltY).attr("x2", sx(n - 1)).attr("y2", beltY)
@@ -678,21 +681,101 @@ const Charts = (() => {
         .each(function (d) { wrap(d3.select(this), 0, r + 32, 30, 12); });
     }
 
-    // the parrot that travels through the pipeline
+    // ---- the creature that rides the line: egg → cracks → chick → parrot ----
     const R = compact ? 22 : Math.min(44, innerH * 0.16);
     const VB_W = 51, VB_H = 52.5, originX = 11, originY = 4.5;
+    const CX = originX + VB_W / 2, CY = originY + VB_H / 2;
     const scale = (R * 1.25) / (VB_W / 2);
-    const parrotG = g.append("g").attr("class", "parrot-g");
-    const innerG = parrotG.append("g")
-      .attr("transform", `translate(${-(originX + VB_W / 2) * scale},${-(originY + VB_H / 2) * scale}) scale(${scale})`);
-    const artDoc = new DOMParser().parseFromString(PARROT_SVG, "image/svg+xml");
-    innerG.node().appendChild(document.importNode(artDoc.documentElement, true));
+    const footY = (VB_H / 2) * scale;   // shared ground line for every life stage
 
+    const actor = g.append("g").attr("class", "parrot-g");
+
+    // embeds the OpenMoji art at scale s2, with its feet resting on footY
+    function artAt(parent, s2) {
+      const gg = parent.append("g");
+      gg.append("g")
+        .attr("transform", `translate(0,${footY - (VB_H / 2) * s2}) scale(${s2}) translate(${-CX},${-CY})`)
+        .node().appendChild(document.importNode(
+          new DOMParser().parseFromString(PARROT_SVG, "image/svg+xml").documentElement, true));
+      return gg;
+    }
+
+    // --- stages 01–02: the egg (speckled with the unfiltered web) ---
+    const eggRx = R * 0.78, eggRy = R * 1.02, eggCY = footY - eggRy;
+    const eggG = actor.append("g");
+    const eggShake = eggG.append("g");
+    eggShake.append("ellipse").attr("cx", 0).attr("cy", eggCY)
+      .attr("rx", eggRx).attr("ry", eggRy)
+      .attr("fill", "#efe9dc").attr("stroke", "rgba(255,255,255,0.35)").attr("stroke-width", 1.5);
+    [[-0.32, -0.3, C.blue, 0.42], [0.25, -0.05, C.teal, 0.5], [-0.1, 0.28, C.orange, 0.45],
+     [0.38, 0.32, C.blue, 0.35], [-0.42, 0.05, C.teal, 0.3]].forEach(([fx, fy, col, op]) => {
+      eggShake.append("circle").attr("cx", fx * eggRx).attr("cy", eggCY + fy * eggRy)
+        .attr("r", R * 0.085).attr("fill", col).attr("opacity", op);
+    });
+    const cracks = eggShake.append("g").attr("fill", "none")
+      .attr("stroke", "#33302a").attr("stroke-width", 1.6).attr("stroke-linejoin", "round");
+    const crackPaths = [
+      `M0,${eggCY - eggRy * 0.86} l${eggRx * 0.16},${eggRy * 0.2} l${-eggRx * 0.22},${eggRy * 0.2} l${eggRx * 0.24},${eggRy * 0.22}`,
+      `M${-eggRx * 0.12},${eggCY - eggRy * 0.36} l${-eggRx * 0.3},${eggRy * 0.14} l${eggRx * 0.08},${eggRy * 0.2}`,
+      `M${eggRx * 0.2},${eggCY - eggRy * 0.28} l${eggRx * 0.28},${eggRy * 0.2}`,
+    ].map(d => cracks.append("path").attr("d", d).node());
+    const crackLen = crackPaths.map(p => p.getTotalLength());
+    crackPaths.forEach((p, i) => {
+      p.setAttribute("stroke-dasharray", crackLen[i]);
+      p.setAttribute("stroke-dashoffset", crackLen[i]);
+    });
+
+    // --- stage 03: the chick hatches (pale grey: fluent, but nothing behind it) ---
+    const chickG = actor.append("g");
+    artAt(chickG, scale * 0.78).style("filter", "grayscale(1) brightness(1.5)").attr("opacity", 0.95);
+    chickG.append("path")
+      .attr("d", d3.arc().innerRadius(0).outerRadius(eggRx * 1.05).startAngle(0).endAngle(Math.PI)())
+      .attr("transform", `translate(0,${footY - R * 0.42})`)
+      .attr("fill", "#efe9dc").attr("stroke", "rgba(255,255,255,0.35)").attr("stroke-width", 1.5);
+
+    // --- stage 04: the parrot leaves the line, talking ---
+    const parrotArt = artAt(actor, scale);
+
+    // shared speech bubble: the chick babbles at 03, the punchline lands at 04
     const bubble = g.append("text").attr("text-anchor", "middle")
       .attr("x", innerW / 2).attr("y", beltY + r + (compact ? 34 : 78))
       .attr("fill", C.red).style("font-family", "Newsreader, Georgia, serif")
-      .style("font-size", compact ? 13 : 17).attr("opacity", 0)
-      .text("…but without any reference to meaning.");
+      .style("font-size", compact ? 13 : 17).attr("opacity", 0);
+
+    function stageFor(i) { return i <= 1 ? eggG : i === 2 ? chickG : parrotArt; }
+    function showStage(idx, dur) {
+      [eggG, chickG, parrotArt].forEach(gg => {
+        gg.interrupt().transition().duration(dur).attr("opacity", gg === stageFor(idx) ? 1 : 0);
+      });
+    }
+    function shake(on) {
+      eggShake.interrupt().attr("transform", `rotate(0,0,${eggCY})`);
+      if (!on) return;
+      (function loop() {
+        eggShake.transition().duration(260).ease(d3.easeSinInOut)
+          .attr("transform", `rotate(2.4,0,${eggCY})`)
+          .transition().duration(260).ease(d3.easeSinInOut)
+          .attr("transform", `rotate(-2.4,0,${eggCY})`)
+          .on("end", loop);
+      })();
+    }
+    function drawCracks(draw, dur) {
+      crackPaths.forEach((p, i) => {
+        d3.select(p).interrupt().transition().duration(draw ? dur : 0).delay(draw ? i * 180 : 0)
+          .attr("stroke-dashoffset", draw ? 0 : crackLen[i]);
+      });
+    }
+    function setBubble(idx, dur) {
+      const line = idx === 3
+        ? { t: "…but without any reference to meaning.", c: C.red, fs: compact ? 13 : 17 }
+        : idx === 2
+          ? { t: "“the doctor said…  the doctor said…”", c: C.grey, fs: compact ? 12 : 15 }
+          : null;
+      bubble.interrupt();
+      if (!line) { bubble.transition().duration(dur).attr("opacity", 0); return; }
+      bubble.text(line.t).attr("fill", line.c).style("font-size", line.fs + "px")
+        .attr("opacity", 0).transition().duration(dur).attr("opacity", 1);
+    }
 
     function setActive(idx, animate) {
       const dur = animate ? 600 : 0;
@@ -705,12 +788,15 @@ const Charts = (() => {
         .attr("fill", (d, i) => i < idx ? C.teal : i === idx ? "#fff" : C.grey);
       const tx = sx(idx), ty = beltY - r - R * 1.15;
       if (animate) {
-        parrotG.interrupt().transition().duration(900).ease(d3.easeCubicInOut)
+        actor.interrupt().transition().duration(900).ease(d3.easeCubicInOut)
           .attr("transform", `translate(${tx},${ty})`);
       } else {
-        parrotG.attr("transform", `translate(${tx},${ty})`);
+        actor.attr("transform", `translate(${tx},${ty})`);
       }
-      bubble.interrupt().transition().duration(400).attr("opacity", idx === 3 ? 1 : 0);
+      showStage(idx, animate ? 350 : 0);
+      shake(idx === 1);
+      drawCracks(idx >= 1, 700);
+      setBubble(idx, animate ? 400 : 0);
     }
 
     setActive(0, false);
