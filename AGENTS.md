@@ -163,6 +163,20 @@ git push -u origin feature/leo-environment
 # base: main, compare: your branch.
 ```
 
+**Alternative — GitHub CLI (`gh`):** instead of clicking through the GitHub
+website, open the PR right from the terminal after pushing:
+
+```bash
+gh pr create --base main --head feature/leo-environment \
+  --title "Environment section" --fill
+# then watch / update it from the terminal as well:
+gh pr view --web        # open the PR in the browser
+gh pr checks            # wait for status checks
+```
+
+(`--fill` uses your commit messages as title/body — least manual work.
+Install once with `brew install gh` + `gh auth login`.)
+
 - **Pull Request, not `git push origin main`.** Pushing to `main` would deploy
   to GitHub Pages immediately, unreviewed.
 - Small, frequent commits with imperative summary lines
