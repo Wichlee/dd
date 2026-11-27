@@ -86,7 +86,8 @@ const Charts = (() => {
       legend.append("text").attr("class", "c-label").attr("x", 18).attr("y", i * 20 + 4).text(d[0]);
     });
     const readout = g.append("text").attr("class", "c-big").attr("x", innerW).attr("y", innerH - 20)
-      .attr("text-anchor", "end").attr("fill", C.gold);
+      .attr("text-anchor", "end").attr("fill", C.gold)
+      .style("font-size", innerW < 560 ? "15px" : null);
     source(g, innerH, "Table 1 · hover a bubble for details");
 
     return {
@@ -166,7 +167,7 @@ const Charts = (() => {
       .attr("fill", "none").attr("stroke", color).attr("stroke-width", dash ? 2 : 4).attr("stroke-dasharray", dash || null);
     const lm = mk("lm", C.gold), moore = mk("moore", C.grey, "5 5");
     g.append("text").attr("class", "c-label").attr("fill", C.gold).attr("x", x(3.2)).attr("y", y(300) - 14).attr("text-anchor", "end").text("largest language models: ×300,000");
-    g.append("text").attr("class", "c-label").attr("x", x(4.2)).attr("y", y(30) + 20).text("Moore's law: ≈ ×16 in 6 years (illustrative comparison)");
+    g.append("text").attr("class", "c-label").attr("x", innerW).attr("text-anchor", "end").attr("y", y(30) + 20).text("Moore's law: ≈ ×16 in 6 years (illustrative comparison)");
     const dot = g.append("circle").attr("cx", x(6)).attr("cy", y(300000)).attr("r", 7).attr("fill", C.gold).attr("opacity", 0);
 
     const ty = hl + 70;
@@ -681,7 +682,7 @@ const Charts = (() => {
     innerG.node().appendChild(document.importNode(artDoc.documentElement, true));
 
     const bubble = g.append("text").attr("text-anchor", "middle")
-      .attr("x", sx(3)).attr("y", beltY + r + (compact ? 34 : 78))
+      .attr("x", innerW / 2).attr("y", beltY + r + (compact ? 34 : 78))
       .attr("fill", C.red).style("font-family", "Newsreader, Georgia, serif")
       .style("font-size", compact ? 13 : 17).attr("opacity", 0)
       .text("…but without any reference to meaning.");
@@ -695,7 +696,7 @@ const Charts = (() => {
         .attr("stroke-width", (d, i) => i === idx ? 3 : 1.5);
       stations.selectAll("text").transition().duration(dur)
         .attr("fill", (d, i) => i < idx ? C.teal : i === idx ? "#fff" : C.grey);
-      const tx = sx(idx), ty = beltY - R * 1.35;
+      const tx = sx(idx), ty = beltY - r - R * 1.15;
       if (animate) {
         parrotG.interrupt().transition().duration(900).ease(d3.easeCubicInOut)
           .attr("transform", `translate(${tx},${ty})`);
@@ -723,7 +724,7 @@ const Charts = (() => {
     const body = g.append("g").attr("opacity", 0);
 
     body.append("text").attr("class", "c-huge").attr("x", x).attr("y", innerH * 0.3)
-      .attr("text-anchor", "middle").attr("font-size", compact ? 66 : 110).attr("fill", C.orange).text("?");
+      .attr("text-anchor", "middle").style("font-size", (compact ? 66 : 110) + "px").attr("fill", C.orange).text("?");
 
     const qY = innerH * 0.3 + (compact ? 74 : 128);
     const quote = body.append("text").attr("x", x).attr("y", qY)

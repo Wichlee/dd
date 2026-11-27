@@ -177,6 +177,9 @@ h1, h2 {
 
 /* ---------- OUTRO ---------- */
 .outro {
+  position: relative;
+  z-index: 3;
+  background: var(--bg);
   min-height: 80vh;
   display: flex;
   align-items: center;
