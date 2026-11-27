@@ -489,16 +489,53 @@ const Charts = (() => {
     header(g, "Next-word roulette", "Click a candidate. The model only ever picks what is likely, never what is true.");
     g.append("text").attr("class", "c-src").attr("x", 0).attr("y", innerH + 44).text("Probabilities are illustrative, not from the paper.");
 
-    // longer sentences shrink so they never clip (the "that …" branches run long)
-    function chipSize(s) { return s.length > 44 ? 14 : s.length > 32 ? 17 : 26; }
+    const compact = innerW < 560;
 
-    // --- current sentence (chips) ---
+    // longer sentences shrink so they never clip (the "that …" branches run long)
+    function chipSize(s) {
+      const big = compact ? 22 : 26, mid = compact ? 15 : 17, small = compact ? 13 : 14;
+      return s.length > 44 ? small : s.length > 32 ? mid : big;
+    }
+
+    // --- the parrot (standing in for the LLM) says the sentence you assemble ---
+    const VB_W = 51, VB_H = 52.5, PCX = 36.5, PCY = 30.75;
+    const PH = compact ? 40 : Math.min(112, innerH * 0.3);
+    const pScale = PH / VB_H;
+    const parrotX = innerW - (compact ? 30 : 56);
+    const parrotY = compact ? 88 : 46;   // art-centre position
+    const parrotG = g.append("g").attr("transform", `translate(${parrotX},${parrotY})`);
+    parrotG.append("g")
+      .attr("transform", `scale(${pScale}) translate(${-PCX},${-PCY})`)
+      .node().appendChild(document.importNode(
+        new DOMParser().parseFromString(PARROT_SVG, "image/svg+xml").documentElement, true));
+    const beak = [parrotX - (VB_W / 2) * pScale - 2, parrotY - (VB_H / 2) * pScale * 0.7];
+
+    // --- current sentence, rendered as the parrot's speech bubble ---
     const sentenceG = g.append("g").attr("transform", `translate(0, 40)`);
+    const bRect = sentenceG.append("rect").attr("rx", 12)
+      .attr("fill", "rgba(255,255,255,0.07)").attr("stroke", "rgba(255,255,255,0.28)")
+      .attr("stroke-width", 1.2);
+    const bTail = sentenceG.append("path").attr("fill", "rgba(255,255,255,0.07)");
+    const voice = sentenceG.append("line").attr("stroke", C.grey).attr("stroke-width", 1.2)
+      .attr("stroke-dasharray", "3 5").attr("opacity", 0.7);
     const chips = sentenceG.append("text")
       .attr("class", "c-head")
       .style("font-size", chipSize(START) + "px")
       .attr("x", 0).attr("y", 0)
       .text(START);
+
+    // fit the bubble around the sentence and run the voice line to the beak
+    function layoutBubble() {
+      const bb = chips.node().getBBox();
+      const px = compact ? 10 : 14, py = compact ? 8 : 11;
+      const x = bb.x - px, y = bb.y - py, w = bb.width + 2 * px, h = bb.height + 2 * py;
+      const cy = bb.y + bb.height / 2;
+      bRect.attr("x", x).attr("y", y).attr("width", w).attr("height", h);
+      bTail.attr("d", `M${x + w - 2},${cy - 6} L${x + w + (compact ? 12 : 18)},${cy} L${x + w - 2},${cy + 6} Z`);
+      voice.attr("x1", x + w + (compact ? 12 : 18)).attr("y1", cy + 40)
+        .attr("x2", beak[0]).attr("y2", beak[1]);
+    }
+    layoutBubble();
 
     // --- candidate bars ---
     const barX = 150;                    // bars start after the word labels
@@ -569,6 +606,7 @@ const Charts = (() => {
       sentence = sentence + " " + word;
       chips.data([sentence]).text(sentence);
       chips.style("font-size", chipSize(sentence) + "px");
+      layoutBubble();
       if (AUTOCOMPLETE_STEPS[sentence]) {
         renderCandidates();
       } else {
@@ -595,6 +633,7 @@ const Charts = (() => {
             sentence = START;
             chips.data([START]).text(START);
             chips.style("font-size", chipSize(START) + "px");
+            layoutBubble();
             renderCandidates();
           });
       }
