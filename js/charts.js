@@ -139,118 +139,187 @@ const Charts = (() => {
     };
   }
 
-  /* ---------- Chart 2: CO2 comparison bars ---------- */
-  function co2Chart(sel) {
-    const { g, w, h } = svgRoot(sel);
-    const innerW = w - M.left - M.right;
-    const innerH = h - M.top - M.bottom;
-
-    g.append("text").attr("class", "chart-title").attr("x", 0).attr("y", -M.top + 30).text("CO₂ emissions, one training run");
-
-    const data = [
-      { label: "Average person, 1 year", co2: 5, color: "#9aa5b8" },
-      { label: "One person's lifetime (76 yrs)", co2: 5 * 76, color: "#9aa5b8" },
-      { label: "Train BERT (1×)", co2: 284 / 2, color: "#f0a35e" },   // approx, one base run
-      { label: "Train Transformer + search", co2: 284, color: "#f05c7a" },
-    ];
-
-    const max = 320;
-    const x = d3.scaleLinear().domain([0, max]).range([0, innerW]);
-    const y = d3.scaleBand().domain(data.map(d => d.label)).range([0, innerH]).padding(0.3);
-
-    const bars = g.append("g").selectAll("rect")
-      .data(data).enter()
-      .append("rect")
-      .attr("class", "bubble")
-      .attr("x", 0).attr("y", d => y(d.label))
-      .attr("width", 0).attr("height", y.bandwidth())
-      .attr("fill", d => d.color).attr("rx", 4);
-
-    const labels = g.append("g").selectAll("text")
-      .data(data).enter()
-      .append("text")
-      .attr("class", "legend")
-      .attr("x", d => 8).attr("y", d => y(d.label) + y.bandwidth() / 2)
-      .attr("dy", "0.35em")
-      .attr("fill", "#fff")
-      .style("font-weight", 700)
-      .text(() => '');
-
-    const caption = g.append("text").attr("class", "hint-in-svg").attr("x", 0).attr("y", innerH + 34).attr("fill", "#9aa5b8")
-      .text("An average person emits ~5 t CO₂e per year. One big model can match a whole lifetime.");
-
-    const dd = g.append("g");
-    const yearRects = bars;
-
-    return {
-      step() {
-        bars.transition().duration(900)
-          .attr("width", d => x(d.co2))
-          .attr("opacity", d => (d.co2 === 284 ? 1 : 0.65));
-        dd.selectAll("text").remove();
-      },
-    };
+  /* ---------- Environmental section: scoped, accessible HTML visuals ----------
+     The stage is shared with the rest of the story. CSS positions .env-stage;
+     these visualisations never modify the surrounding chapters.
+  --------------------------------------------------------------------------- */
+  function envPanel(sel, modifier) {
+    sel.selectAll('*').remove();
+    return sel.append('div')
+      .attr('class', `env-stage ${modifier}`)
+      .style('color', '#e8ecf3');
   }
 
-  /* ---------- Chart 3: Compute growth vs Moore's law ---------- */
-  function computeChart(sel) {
-    const { g, w, h } = svgRoot(sel);
-    const innerW = w - M.left - M.right;
-    const innerH = h - M.top - M.bottom;
+  function envHeading(panel, eyebrow, title) {
+    panel.append('p').attr('class', 'env-stage-eyebrow').text(eyebrow);
+    panel.append('h3').attr('class', 'env-stage-title').text(title);
+  }
 
-    g.append("text").attr("class", "chart-title").attr("x", 0).attr("y", -M.top + 30).text("Compute needed to train the biggest models");
+  function envSource(panel, html) {
+    panel.append('p').attr('class', 'env-stage-source').html(html);
+  }
 
-    // 300,000x in 6 years vs Moore (2x per 18 months ≈ ~16x in 6y)
-    const x = d3.scaleLinear().domain([0, 6]).range([0, innerW]);
-    const y = d3.scaleLog().base(10).domain([1, 400000]).range([innerH, 0]).nice();
+  /* Values reported in the assigned paper, §3, p. 612. The line for an
+     average person is a calculation that holds the paper's 2017 rate constant;
+     it is not a historical time series. CO₂ and CO₂e are distinct measures. */
+  function co2Chart(sel) {
+    const modelTonnes = COST_FACTS.transformerCO2;
+    const annualTonnes = COST_FACTS.humanYearCO2e;
+    const maxYears = 60;
+    const panel = envPanel(sel, 'env-comparator');
+    envHeading(panel, 'Two figures from the paper', 'When do the numbers meet?');
+    panel.append('p').attr('class', 'env-stage-intro')
+      .text('Scroll to add years at the 2017 global average. The model estimate stays fixed.');
 
-    const lineLM = d3.line()
-      .x((d, i) => x(i))
-      .y(d => y(d.lm));
-    const lineMoore = d3.line()
-      .x((d, i) => x(i))
-      .y(d => y(d.moore));
+    const legend = panel.append('div').attr('class', 'carbon-legend').attr('aria-hidden', 'true');
+    legend.append('span').attr('class', 'carbon-key carbon-key-model')
+      .text('Model procedure: 284 tonnes CO₂');
+    legend.append('span').attr('class', 'carbon-key carbon-key-person')
+      .text('One person: 5 tonnes CO₂e / year');
 
-    const pts = [];
-    for (let i = 0; i <= 6; i++) {
-      pts.push({ lm: Math.pow(300000, i / 6), moore: Math.pow(2, i / 1.5) });
+    const svg = panel.append('svg').attr('class', 'carbon-line-chart')
+      .attr('viewBox', '0 0 680 270').attr('role', 'img')
+      .attr('aria-label', 'Line chart of two figures reported in the paper. One Transformer development procedure including a search for model designs is estimated at 284 tonnes of CO₂. A line increasing at the 2017 global average of 5 tonnes CO₂ equivalent per person per year reaches 285 tonnes after 57 years. This is an illustrative calculation, not a historical time series or exact equivalence: CO₂ and CO₂ equivalent are different measures.');
+    const x = d3.scaleLinear().domain([0, maxYears]).range([55, 650]);
+    const y = d3.scaleLinear().domain([0, 300]).range([214, 20]);
+    const grid = svg.append('g').attr('class', 'carbon-grid').attr('aria-hidden', 'true');
+    [0, 100, 200, 300].forEach(tick => {
+      grid.append('line').attr('x1', x(0)).attr('x2', x(maxYears))
+        .attr('y1', y(tick)).attr('y2', y(tick));
+      grid.append('text').attr('x', x(0) - 10).attr('y', y(tick) + 4)
+        .attr('text-anchor', 'end').text(tick);
+    });
+    [0, 10, 20, 30, 40, 50, 60].forEach(tick => {
+      grid.append('text').attr('x', x(tick)).attr('y', 235)
+        .attr('text-anchor', 'middle').text(tick);
+    });
+    grid.append('text').attr('x', x(0)).attr('y', 11).text('Tonnes');
+    grid.append('text').attr('x', x(maxYears)).attr('y', 260)
+      .attr('text-anchor', 'end').text('Years at the 2017 global average');
+
+    svg.append('line').attr('class', 'carbon-line carbon-line-model')
+      .attr('x1', x(0)).attr('x2', x(maxYears)).attr('y1', y(modelTonnes)).attr('y2', y(modelTonnes));
+    const person = svg.append('line').attr('class', 'carbon-line carbon-line-person')
+      .attr('x1', x(0)).attr('y1', y(0));
+    const crossing = svg.append('g').attr('class', 'carbon-crossing-annotation');
+    crossing.append('line').attr('class', 'carbon-crossing-guide')
+      .attr('x1', x(modelTonnes / annualTonnes)).attr('x2', x(modelTonnes / annualTonnes))
+      .attr('y1', y(modelTonnes)).attr('y2', y(0));
+    crossing.append('circle').attr('class', 'carbon-crossing').attr('r', 6)
+      .attr('cx', x(modelTonnes / annualTonnes)).attr('cy', y(modelTonnes));
+    crossing.append('text').attr('class', 'carbon-crossing-label')
+      .attr('x', x(modelTonnes / annualTonnes) - 12).attr('y', y(0) - 12)
+      .attr('text-anchor', 'end').text('≈ 57 years');
+    const marker = svg.append('circle').attr('class', 'carbon-line-marker').attr('r', 5);
+    const progressLabel = panel.append('p').attr('class', 'carbon-progress').attr('aria-hidden', 'true');
+    panel.append('p').attr('class', 'carbon-comparison-note')
+      .text('The lines meet at about 57 years only as a numerical comparison. CO₂e expresses greenhouse gases as an equivalent amount of CO₂; the measures and timeframes differ. The 2017 average is held constant, not a record of actual yearly emissions.');
+    envSource(panel, 'Source: <a href="https://doi.org/10.1145/3442188.3445922" target="_blank" rel="noopener noreferrer">Bender et al. (2021), §3, p. 612</a>');
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    function draw(progress) {
+      // Reach the crossing before the chapter ends so it stays visible while readers continue scrolling.
+      const years = reducedMotion.matches ? maxYears : Math.max(0, Math.min(maxYears, progress * maxYears / 0.55));
+      const shownYears = Math.round(years * 10) / 10;
+      crossing.attr('opacity', years >= modelTonnes / annualTonnes ? 1 : 0);
+      person.attr('x2', x(years)).attr('y2', y(years * annualTonnes));
+      marker.attr('cx', x(years)).attr('cy', y(years * annualTonnes));
+      progressLabel.text(`${shownYears} years × ${annualTonnes} tonnes CO₂e per year = ${Math.round(shownYears * annualTonnes * 10) / 10} tonnes CO₂e`);
     }
+    // A completed chart is the fallback if scroll progress is not available.
+    draw(1);
+    return { setProgress: draw };
+  }
 
-    const lm = g.append("path").datum(pts)
-      .attr("class", "axis")
-      .attr("d", lineLM)
-      .attr("fill", "none").attr("stroke", "#ffd166").attr("stroke-width", 3);
-    const moore = g.append("path").datum(pts)
-      .attr("class", "axis")
-      .attr("d", lineMoore)
-      .attr("fill", "none").attr("stroke", "#9aa5b8")
-      .attr("stroke-width", 2).attr("stroke-dasharray", "4 4");
+  function envIntroChart(sel) {
+    const panel = envPanel(sel, 'env-static');
+    envHeading(panel, 'Behind the screen', 'How does AI have a footprint?');
+    const items = [
+      ['01', 'Computing', 'Data-centre hardware performs the calculations needed to develop and use a model.'],
+      ['02', 'Electricity', 'That hardware and its supporting infrastructure need power.'],
+      ['03', 'Emissions', 'Generating electricity can release greenhouse gases; the amount depends on the energy source.'],
+    ];
+    const list = panel.append('ol').attr('class', 'env-process');
+    items.forEach(([number, title, body]) => {
+      const item = list.append('li');
+      item.append('span').attr('class', 'env-process-number').attr('aria-hidden', 'true').text(number);
+      const content = item.append('div');
+      content.append('strong').text(title);
+      content.append('p').text(body);
+    });
+    envSource(panel, 'Source: <a href="https://doi.org/10.1145/3442188.3445922" target="_blank" rel="noopener noreferrer">Bender et al. (2021), §3</a>');
+    return { step() {} };
+  }
 
-    g.append("g").attr("class", "axis").attr("transform", `translate(0,${innerH})`)
-      .call(d3.axisBottom(x).ticks(4).tickFormat(d => d + "y"));
-    g.append("g").attr("class", "axis").call(d3.axisLeft(y));
+  /* Historical change reported in the assigned paper, §3, p. 612. */
+  function computeChart(sel) {
+    const panel = envPanel(sel, 'env-compute');
+    envHeading(panel, 'A historical change in scale', 'The computing race');
+    panel.append('p').attr('class', 'env-compute-number').text('300,000×');
+    panel.append('p').attr('class', 'env-stage-intro')
+      .text('The paper reports this increase in computing used to train the largest deep-learning models over six years.');
+    const timeline = panel.append('div').attr('class', 'env-timeline').attr('aria-label', 'Over six years');
+    timeline.append('strong').text('Start');
+    timeline.append('span').attr('aria-hidden', 'true').text('──────────→');
+    timeline.append('strong').text('Six years later');
+    panel.append('p').attr('class', 'env-caveat')
+      .text('This covers language models and other applications. It measures computation, not electricity or CO₂ emissions.');
+    envSource(panel, 'Source: <a href="https://doi.org/10.1145/3442188.3445922" target="_blank" rel="noopener noreferrer">Bender et al. (2021), §3, p. 612</a>');
+    return { step() {} };
+  }
 
-    // labels
-    g.append("text").attr("x", innerW * 0.62).attr("y", 60).attr("fill", "#ffd166")
-      .style("font-size", 13).text("language models: ×300,000");
-    g.append("text").attr("x", innerW * 0.32).attr("y", innerH * 0.55).attr("fill", "#9aa5b8")
-      .style("font-size", 13).text("Moore's law: ~×16");
+  function envLifecycleChart(sel) {
+    const panel = envPanel(sel, 'env-static');
+    envHeading(panel, 'Beyond one training run', 'A model has a lifecycle');
+    const items = [
+      ['01', 'Develop & experiment', 'Try architectures and settings, often training many versions.'],
+      ['02', 'Train & deploy', 'Prepare the chosen model and make it available.'],
+      ['03', 'Use repeatedly', 'Each response takes computation. Usage can add up over time.'],
+    ];
+    const list = panel.append('ol').attr('class', 'env-process');
+    items.forEach(([number, title, body]) => {
+      const item = list.append('li');
+      item.append('span').attr('class', 'env-process-number').attr('aria-hidden', 'true').text(number);
+      const content = item.append('div');
+      content.append('strong').text(title);
+      content.append('p').text(body);
+    });
+    panel.append('p').attr('class', 'env-caveat')
+      .text('How the footprint is divided varies by model and use; these stages are not shown to scale.');
+    envSource(panel, 'Source: <a href="https://doi.org/10.1145/3442188.3445922" target="_blank" rel="noopener noreferrer">Bender et al. (2021), §3</a>');
+    return { step() {} };
+  }
 
-    const gmark = g.append("circle")
-      .attr("r", 6).attr("fill", "#ffd166")
-      .attr("cx", x(6)).attr("cy", y(300000))
-      .attr("opacity", 0);
+  function envTradeoffChart(sel) {
+    const panel = envPanel(sel, 'env-static');
+    envHeading(panel, 'One historical translation experiment', 'A small gain, a high cost');
+    const stats = panel.append('div').attr('class', 'env-tradeoff');
+    const gain = stats.append('div');
+    gain.append('strong').text('+0.1');
+    gain.append('span').text('BLEU points');
+    const cost = stats.append('div');
+    cost.append('strong').text('$150,000');
+    cost.append('span').text('estimated compute cost');
+    panel.append('p').attr('class', 'env-stage-intro')
+      .text('The paper discusses an English-to-German machine-translation example. BLEU is a score used to compare translations.');
+    panel.append('p').attr('class', 'env-caveat')
+      .text('This is one reported example, not the price of every improvement.');
+    envSource(panel, 'Source: <a href="https://doi.org/10.1145/3442188.3445922" target="_blank" rel="noopener noreferrer">Bender et al. (2021), §3, p. 612</a>');
+    return { step() {} };
+  }
 
-    return {
-      step() {
-        const len = lm.node().getTotalLength();
-        lm.attr("stroke-dasharray", len).attr("stroke-dashoffset", len)
-          .transition().duration(1200).attr("stroke-dashoffset", 0);
-        moore.attr("stroke-dasharray", len).attr("stroke-dashoffset", len)
-          .transition().duration(1200).attr("stroke-dashoffset", 0);
-        gmark.transition().delay(500).attr("opacity", 1);
-      },
-    };
+  function envJusticeChart(sel) {
+    const panel = envPanel(sel, 'env-globe-panel');
+    if (typeof window.createEnvironmentalGlobe === 'function') {
+      return window.createEnvironmentalGlobe(panel.node());
+    }
+    envHeading(panel, 'Examples from the paper', 'Who bears the costs?');
+    panel.append('p').attr('class', 'env-stage-intro')
+      .text('The paper discusses climate risks in Sudan and the Maldives and asks who benefits from language technology.');
+    panel.append('p').attr('class', 'env-caveat')
+      .text('The paper does not rank countries by climate costs or technology benefits.');
+    envSource(panel, 'Source: <a href="https://doi.org/10.1145/3442188.3445922">Bender et al. (2021), §3, pp. 612–613</a>');
+    return { step() {} };
   }
 
   /* ---------- Chart 4: Data representativeness (diverging / bias) ---------- */
@@ -702,5 +771,5 @@ const Charts = (() => {
     return 8 + t * 42;
   }
 
-  return { bubbleChart, co2Chart, computeChart, whoChart, filterChart, parrotChart, autocompleteChart, caseCardsChart };
+  return { bubbleChart, co2Chart, computeChart, envIntroChart, envLifecycleChart, envTradeoffChart, envJusticeChart, whoChart, filterChart, parrotChart, autocompleteChart, caseCardsChart };
 })();

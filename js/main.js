@@ -29,8 +29,8 @@ async function boot() {
 /* Map each chapter index -> chart + step.
    Order follows the outline:
    [0-1] Hero/scale (@Erik) · [2-4] Parrot section (@Erik)
-   [5-7] Environment (@Leo) · [8-9] Data & bias (@Maria)
-   [10-11] Harms (@Robin)  · [12] Paths forward (all, HTML table) */
+   [5-10] Environment (@Leo) · [11-12] Data & bias (@Maria)
+   [13-14] Harms (@Robin)  · [15] Paths forward (all, HTML table) */
 function buildCharts() {
   return [
     { idx: 0, render: "bubbleChart", step: 2019 },
@@ -38,14 +38,17 @@ function buildCharts() {
     { idx: 2, render: "parrotChart", step: null },
     { idx: 3, render: "autocompleteChart", step: null },
     { idx: 4, render: "parrotChart", step: null },
-    { idx: 5, render: "co2Chart", step: null },
+    { idx: 5, render: "envIntroChart", step: null },
     { idx: 6, render: "computeChart", step: null },
     { idx: 7, render: "co2Chart", step: null },
-    { idx: 8, render: "whoChart", step: null },
-    { idx: 9, render: "filterChart", step: null },
-    { idx: 10, render: "caseCardsChart", step: null },
-    { idx: 11, render: "caseCardsChart", step: null },
-    { idx: 12, render: null, step: null }, // HTML comparison table, keep chart
+    { idx: 8, render: "envLifecycleChart", step: null },
+    { idx: 9, render: "envTradeoffChart", step: null },
+    { idx: 10, render: "envJusticeChart", step: null },
+    { idx: 11, render: "whoChart", step: null },
+    { idx: 12, render: "filterChart", step: null },
+    { idx: 13, render: "caseCardsChart", step: null },
+    { idx: 14, render: "caseCardsChart", step: null },
+    { idx: 15, render: null, step: null }, // HTML comparison table, keep chart
   ];
 }
 
@@ -64,16 +67,21 @@ function init() {
     // teardown old chart, build new one
     const factory = Charts[entry.render];
     if (!factory) return;
+    if (current && typeof current.instance.destroy === "function") current.instance.destroy();
     current = { render: entry.render, instance: factory(d3.select(stage)) };
     if (entry.step) current.instance.step(entry.step);
   }
 
   const scroller = scrollama();
+  // Render the opening chart before Scrollama selects the visible chapter.
+  // This also lets a restored scroll position or #environment anchor win.
+  show(chartMapping[0]);
 
   scroller
     .setup({
       step: ".chapter",
       offset: 0.55,
+      progress: true,
     })
     .onStepEnter(({ element, index }) => {
       element.classList.add("active");
@@ -82,6 +90,11 @@ function init() {
     })
     .onStepExit(({ element }) => {
       element.classList.remove("active");
+    })
+    .onStepProgress(({ index, progress }) => {
+      if (chartMapping[index]?.render === current?.render && typeof current?.instance.setProgress === "function") {
+        current.instance.setProgress(progress);
+      }
     });
 
   // select first chapter on load
@@ -91,8 +104,6 @@ function init() {
 
   window.addEventListener("resize", scroller.resize);
 
-  // initial render (first chapter/chart)
-  show(chartMapping[0]);
 }
 
 boot();

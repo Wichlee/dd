@@ -1,0 +1,107 @@
+/* Isolated styles for the environmental-justice globe. */
+.globe-panel { background: #171e29; border: 1px solid #514838; border-radius: 18px; padding: clamp(1.1rem, 2.4vw, 2.4rem); color: #e8edf4; max-height: 93vh; overflow-y: auto; }
+.globe-panel h3 { font-family: 'Newsreader', Georgia, serif; font-size: clamp(1.7rem, 2.3vw, 2.5rem); line-height: 1.05; font-weight: 400; margin: .3rem 0 .55rem; }
+.globe-kicker { margin: 0; text-transform: uppercase; font-size: .72rem; font-weight: 700; letter-spacing: .1em; color: #f7a953; }
+.globe-intro, .globe-context { font-size: .91rem; line-height: 1.4; color: #d0d9e5; margin: .5rem 0; }
+.globe-stage { position: relative; height: clamp(170px, 29vh, 280px); margin: .2rem 0; }
+.globe-stage canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: pan-y; }
+.globe-stage canvas.is-dragging { cursor: grabbing; }
+.globe-loading { position: absolute; inset: 0; display: grid; place-items: center; color: #b7c2d2; text-align: center; padding: 1rem; }
+.globe-instructions, .globe-note, .globe-source { font-size: .76rem; line-height: 1.4; color: #a6b4c7; margin: .55rem 0; }
+.globe-controls { display: flex; flex-wrap: wrap; gap: .5rem; margin: .6rem 0; }
+.globe-controls button { border: 1px solid #c3a567; background: #25303c; color: #fff; font: inherit; font-size: .85rem; padding: .4rem .8rem; border-radius: 999px; cursor: pointer; }
+.globe-controls button:hover, .globe-controls button[aria-pressed="true"] { background: #ffca60; color: #17202a; }
+.globe-controls button:focus-visible, .globe-panel a:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+.globe-detail { color: #ffcf6b; font-size: .86rem; line-height: 1.4; margin: .5rem 0; }
+.globe-source a { color: inherit; }
+/* Fit the interactive globe into the shared story stage without a nested frame. */
+.env-stage.env-globe-panel { padding: 0; background: transparent; border: 0; box-shadow: none; }
+@media (min-width: 1001px) {
+  .globe-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 44%); column-gap: 1rem; align-content: center; }
+  .globe-panel > :not(.globe-stage) { grid-column: 1; }
+  .globe-panel .globe-stage { grid-column: 2; grid-row: 1 / 11; width: 100%; height: clamp(270px, 44vh, 420px); align-self: center; }
+}
+@media (max-width: 1000px) {
+  .globe-panel { max-height: 55vh; padding: 1rem; }
+  .globe-stage { height: clamp(160px, 24vh, 230px); }
+  .globe-panel h3 { font-size: 1.45rem; }
+}
+@media (max-width: 1000px) {
+  .globe-panel { padding: .8rem; }
+  .globe-panel .globe-intro { display: none; }
+  .globe-panel .globe-stage { height: clamp(130px, 18vh, 170px); }
+  .globe-panel .globe-instructions { margin: .3rem 0; }
+  .globe-panel .globe-controls { margin: .35rem 0; }
+  .globe-panel .globe-controls button { padding: .32rem .65rem; }
+}
+/* The inset magnifies the same country outline; it is not drawn to globe scale. */
+.globe-inset[hidden] { display: none; }
+.globe-inset { position: absolute; left: .2rem; bottom: .2rem; width: 90px; padding: .35rem; border: 1px solid #8c805f; border-radius: 8px; background: rgba(13, 20, 28, .94); color: #f4d38a; font-size: .62rem; line-height: 1.2; text-align: center; pointer-events: none; }
+.globe-inset span { display: block; }
+.globe-inset svg { display: block; width: 100%; height: 76px; }
+@media (max-width: 1000px) {
+  .globe-inset { width: 72px; font-size: .55rem; }
+  .globe-inset svg { height: 54px; }
+}
+/* The language view replaces the globe; it does not represent users or geography. */
+.globe-benefits-visual[hidden], .globe-stage[hidden] { display: none !important; }
+.globe-benefits-visual {
+  padding: 1.15rem;
+  border: 1px solid rgba(255, 209, 102, .22);
+  border-radius: 14px;
+  background: #101b25;
+  align-self: center;
+}
+.benefits-eyebrow { margin: 0 0 .5rem; color: #f0a35e; font-size: .66rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+.globe-benefits-visual h4 { margin: 0 0 1.2rem; color: #f3f5f8; font: 400 1.3rem/1.15 'Newsreader', Georgia, serif; }
+.benefits-chart-bar { display: flex; height: 1rem; overflow: hidden; border-radius: 1rem; background: #26333d; }
+.benefits-english { flex: 93; background: #ffd166; }
+.benefits-other { flex: 7; background: #52b9ab; }
+.benefits-chart-labels { display: flex; justify-content: space-between; gap: .8rem; margin: .6rem 0 1rem; color: #d1dce7; font-size: .73rem; }
+.benefits-chart-labels strong { display: block; color: #fff; font-size: 1rem; }
+.benefits-chart-labels span:last-child { text-align: right; }
+.benefits-caption, .benefits-source { color: #bcc9d7; font-size: .72rem; line-height: 1.4; }
+.benefits-source { text-underline-offset: 3px; }
+@media (min-width: 1001px) {
+  .globe-panel .globe-benefits-visual { grid-column: 2; grid-row: 1 / 11; width: 100%; }
+}
+@media (max-width: 1000px) {
+  .globe-benefits-visual { margin: .5rem 0; padding: .75rem; }
+  .globe-benefits-visual h4 { margin-bottom: .6rem; font-size: 1.05rem; }
+  .benefits-chart-labels { margin-bottom: .5rem; }
+  .benefits-caption { margin: .35rem 0; }
+}
+.benefits-gap { color: #ffd166; font-size: .76rem; line-height: 1.35; margin: -.55rem 0 .8rem; }
+@media (max-width: 1000px) {
+  .globe-panel:has(.globe-benefits-visual:not([hidden])) { display: flex; flex-direction: column; }
+  .globe-panel:has(.globe-benefits-visual:not([hidden])) .globe-kicker { order: 0; }
+  .globe-panel:has(.globe-benefits-visual:not([hidden])) h3 { order: 1; }
+  .globe-panel:has(.globe-benefits-visual:not([hidden])) .globe-instructions { order: 2; }
+  .globe-panel:has(.globe-benefits-visual:not([hidden])) .globe-controls { order: 3; }
+  .globe-panel:has(.globe-benefits-visual:not([hidden])) .globe-benefits-visual { order: 4; }
+  .globe-panel:has(.globe-benefits-visual:not([hidden])) .globe-detail { order: 5; }
+  .globe-panel:has(.globe-benefits-visual:not([hidden])) .globe-note { order: 6; }
+  .globe-panel:has(.globe-benefits-visual:not([hidden])) .globe-source { order: 7; }
+  .benefits-gap { margin: .15rem 0 .5rem; }
+  .globe-benefits-visual h4 { margin-bottom: .3rem; }
+  .benefits-chart-bar { height: .7rem; }
+}
+
+/* The globe and language visual are part of the open environmental spread. */
+.globe-panel {
+  padding: 1.35rem 0;
+  border: 0;
+  border-top: 1px solid rgba(255, 209, 102, .25);
+  border-radius: 0;
+  background: transparent;
+}
+.globe-benefits-visual {
+  padding: 1rem 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+@media (max-width: 1000px) {
+  .globe-panel { padding: .7rem 0; }
+  .globe-benefits-visual { padding: .5rem 0; }
+}

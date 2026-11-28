@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stochastic Parrots | How Big Is Too Big?</title>
   <meta name="description" content="An interactive scrollytelling about the dangers of ever larger language models, based on Bender, Gebru et al. (2021), 'On the Dangers of Stochastic Parrots'.">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=environment-overlap-fix-20261128">
+  <link rel="stylesheet" href="css/environment-globe.css?v=environment-open-layout-20261128">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Newsreader:opsz@6..72&display=swap" rel="stylesheet">
@@ -85,33 +86,67 @@
 
       <!-- ================================================== -->
       <!-- SECTION 2 · ENVIRONMENTAL COSTS  ·  owner: @Leo    -->
-      <!-- TODO(Leo): refine texts, tune co2Chart/computeChart -->
       <!-- ================================================== -->
-      <section class="chapter">
+      <section class="chapter environment-chapter" id="environment">
         <div class="chapter-content">
-          <h2>The hidden price tag</h2>
-          <p>All that size doesn't come free — it is paid for in <strong>electricity and CO₂</strong>.</p>
-          <p>Training one large model can emit <strong>284 tonnes of CO₂</strong> — roughly what an average person emits over <strong>57 years</strong>. Training a single BERT model takes about as much energy as a trans-American flight.</p>
-          <!-- TODO(Leo): CO2 comparator interaction -->
+          <p class="environment-kicker">The hidden environmental &amp; climate costs</p>
+          <h2>Every response has a footprint.</h2>
+          <p>Behind a model's fluent words are computers processing data in data centres. <strong>Developing, training and using</strong> a model all require electricity.</p>
+          <p>Producing that electricity can release greenhouse gases. How much depends on the hardware, where and when it runs, and the electricity used.</p>
+          <p class="hint">The paper asks us to consider these costs alongside the benefits of language technology.</p>
         </div>
       </section>
 
-      <section class="chapter">
+      <section class="chapter environment-chapter">
         <div class="chapter-content">
-          <h2>Scoring higher, spending more</h2>
-          <p>The compute used to train the biggest AI models grew <strong>300,000× in six years</strong> — far outpacing Moore's law.</p>
-          <p>And the gains are shrinking: pushing machine translation up by just <strong>0.1 points</strong> on a 100-point scale cost an estimated <strong>$150,000</strong> in compute.</p>
-          <!-- TODO(Leo): cost-vs-gain interaction -->
+          <p class="environment-kicker">A historical snapshot · six years</p>
+          <h2>The appetite for compute</h2>
+          <p>The paper reports that the computing used to train the <strong>largest deep-learning models</strong> increased <strong>300,000× in six years</strong>.</p>
+          <p>The comparison covers language models and other AI applications. It measures computing, not total AI electricity use or emissions.</p>
+          <p class="environment-source"><a href="https://doi.org/10.1145/3442188.3445922">Source: Bender et al. (2021), §3, p. 612</a></p>
         </div>
       </section>
 
-      <section class="chapter">
+      <section class="chapter environment-chapter carbon-scroll-chapter">
         <div class="chapter-content">
-          <h2>Who pays, who profits?</h2>
-          <p>The burden is not evenly spread. Climate impacts hit <strong>vulnerable communities first</strong> — flooding in Sudan, rising seas in the Maldives.</p>
-          <p>Meanwhile the benefits flow to wealthy institutions in rich countries — and the technology is built almost exclusively for <strong>English</strong> and a handful of dominant languages.</p>
-          <p class="hint">The people paying the environmental price are often those least likely to benefit from the models.</p>
-          <!-- TODO(Leo): climate-justice visual -->
+          <p class="environment-kicker">Explore the estimates</p>
+          <h2>How big is a footprint?</h2>
+          <p>The paper reports an estimated <strong>284 tonnes of CO₂</strong> for one Transformer development procedure that included trying different model designs. This historical estimate is not the footprint of every model.</p>
+          <p>For context, the paper also reports a global average of <strong>5 tonnes CO₂e per person per year</strong> in 2017. Scroll to see what happens when that annual amount is added up over time.</p>
+          <p class="hint">This is an illustration that holds the 2017 average constant, not a prediction. CO₂e expresses the warming effect of greenhouse gases as an equivalent amount of CO₂. Because the paper labels the two figures differently, their crossing is not an exact emissions equivalence.</p>
+          <p class="environment-source"><a href="https://doi.org/10.1145/3442188.3445922">Source: Bender et al. (2021), §3, p. 612</a></p>
+        </div>
+      </section>
+
+      <section class="chapter environment-chapter">
+        <div class="chapter-content">
+          <p class="environment-kicker">The whole lifecycle</p>
+          <h2>Training isn't the end.</h2>
+          <p>Building a model can involve many experiments and retraining runs. Once deployed, the model needs computing power every time it is used. This is called <strong>inference</strong>.</p>
+          <p>The paper notes that, over a model's lifetime, the combined cost of repeated use <strong>may exceed its training cost</strong>. The balance depends on the model and how often it is used.</p>
+          <p>For another training example, the paper reports that one BERT base training run on GPUs, without hyperparameter tuning, used roughly as much <strong>energy</strong> as a trans-American flight. This is a comparison of energy, not a count of flights or a CO₂ estimate.</p>
+          <p class="environment-source"><a href="https://doi.org/10.1145/3442188.3445922">Source: Bender et al. (2021), §3</a></p>
+        </div>
+      </section>
+
+      <section class="chapter environment-chapter">
+        <div class="chapter-content">
+          <p class="environment-kicker">The cost of improvement</p>
+          <h2>What is a small gain worth?</h2>
+          <p>Better results can be valuable, but they may also require substantial resources. The paper cites one English-to-German translation experiment that gained <strong>0.1 BLEU</strong>—a translation benchmark score—at an estimated additional compute cost of <strong>$150,000</strong>.</p>
+          <p>This is one historical example, not a universal cost. Expensive computing can also make it harder for under-resourced researchers to participate.</p>
+          <p class="environment-source"><a href="https://doi.org/10.1145/3442188.3445922">Source: Bender et al. (2021), §3, p. 612</a></p>
+        </div>
+      </section>
+
+      <section class="chapter environment-chapter" id="climate-justice">
+        <div class="chapter-content">
+          <p class="environment-kicker">Climate justice</p>
+          <h2>Who bears the costs?</h2>
+          <p>The authors ask who experiences climate risks and who benefits from language technology. <strong>Sudan and the Maldives</strong> are two examples they discuss.</p>
+          <p>They contrast these risks with language models primarily developed for English, while comparable large models for Sudanese Arabic and Dhivehi were lacking at the time.</p>
+          <p class="hint">Rotate the globe as you scroll, or use its controls to explore. The paper does not rank countries by costs or benefits.</p>
+          <p class="environment-source"><a href="https://doi.org/10.1145/3442188.3445922">Source: Bender et al. (2021), §3, pp. 612–613</a></p>
         </div>
       </section>
 
@@ -193,7 +228,8 @@
   </footer>
 
   <script src="js/data.js"></script>
-  <script src="js/charts.js"></script>
+  <script src="js/environment-globe.js"></script>
+  <script src="js/charts.js?v=environment-scroll-pinning-20261128"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

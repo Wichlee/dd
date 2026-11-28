@@ -18,14 +18,14 @@ const MODELS = [
 /* Timeline steps (in years) the bubble chart animates through */
 const TIMELINE_YEARS = [2019, 2020, 2021];
 
-/* Environmental / financial cost facts (§3) */
+/* Historical figures reported in Bender et al. (2021), §3, p. 612.
+   The paper labels the training figure CO₂ and the human average CO₂e. */
 const COST_FACTS = {
-  transformerCO2: 284,      // tonnes CO2e to train Transformer (big) with NAS
-  humanYearCO2: 5,          // average human emissions per year (2017)
-  bertFlight: "1 trans-Atlantic flight", // energy to train single BERT base
-  bleuGain: 0.1,            // BLEU improvement
-  bleuCostDollars: 150000,  // compute cost for +0.1 BLEU, EN->DE
-  computeGrowth: 300000,    // x compute growth in 6 years
+  transformerCO2: 284,    // tonnes CO₂, Transformer with architecture search
+  humanYearCO2e: 5,       // tonnes CO₂e per person per year, 2017 global average
+  bleuGain: 0.1,
+  bleuCostDollars: 150000,
+  computeGrowth: 300000,  // increase in compute over six years
 };
 
 /* Representativeness facts (§4) */
