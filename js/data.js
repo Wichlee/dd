@@ -42,11 +42,39 @@ const BIAS_FACTS = {
    ILLUSTRATIVE probabilities — plausible next-word distributions,
    NOT measured values from the paper. Kept static on purpose:
    the point is the *mechanism* (picking likely, not true, words).
+
+   Branching tree: each key is the sentence-so-far, its value is the
+   list of next candidates. Whichever word you pick, the branch always
+   ends in a complete, sensible sentence — the model never had to know
+   what it meant to get there.
 ------------------------------------------------------------------- */
-const AUTOCOMPLETE_STEPS = [
-  { sentence: "The doctor said", options: [["she", 41], ["he", 37], ["that", 14]] },
-  { sentence: "The doctor said she", options: [["was", 38], ["would", 27], ["had", 19]] },
-  { sentence: "The doctor said she was", options: [["tired", 22], ["fine", 18], ["wrong", 12]] },
-];
+const AUTOCOMPLETE_STEPS = {
+  "The doctor said":              [["she", 41], ["he", 37], ["that", 14]],
+
+  "The doctor said she":          [["was", 38], ["would", 27], ["had", 19]],
+  "The doctor said he":           [["was", 36], ["would", 28], ["had", 21]],
+  "The doctor said that":         [["she", 35], ["he", 30], ["it", 16]],
+
+  "The doctor said she was":      [["tired", 22], ["fine", 18], ["wrong", 12]],
+  "The doctor said she would":    [["leave", 20], ["agree", 16], ["wait", 13]],
+  "The doctor said she had":      [["a fever", 24], ["surgery", 17], ["a point", 13]],
+  "The doctor said he was":       [["right", 19], ["wrong", 14], ["there", 13]],
+  "The doctor said he would":     [["wait", 18], ["leave", 16], ["come", 13]],
+  "The doctor said he had":       [["a fever", 22], ["surgery", 16], ["a point", 12]],
+
+  "The doctor said that she":     [["was", 34], ["would", 25], ["had", 18]],
+  "The doctor said that he":      [["was", 33], ["would", 26], ["had", 19]],
+  "The doctor said that it":      [["was", 36], ["would", 22], ["had", 15]],
+
+  "The doctor said that she was": [["tired", 20], ["fine", 16], ["wrong", 11]],
+  "The doctor said that she would": [["leave", 18], ["agree", 15], ["wait", 12]],
+  "The doctor said that she had": [["a fever", 20], ["surgery", 15], ["a point", 11]],
+  "The doctor said that he was":  [["right", 17], ["wrong", 13], ["there", 12]],
+  "The doctor said that he would": [["wait", 17], ["leave", 15], ["come", 12]],
+  "The doctor said that he had":  [["a fever", 20], ["surgery", 15], ["a point", 11]],
+  "The doctor said that it was":  [["true", 21], ["raining", 15], ["too late", 12]],
+  "The doctor said that it would": [["rain", 18], ["work", 15], ["hurt", 11]],
+  "The doctor said that it had":  [["started", 16], ["to hurt", 13], ["been long", 10]],
+};
 const AUTOCOMPLETE_ENDING =
   "…and it never once wondered which word it chose — or what it meant.";

@@ -29,26 +29,32 @@ async function boot() {
 /* Map each chapter index -> chart + step.
    Order follows the outline:
    [0-1] Hero/scale (@Erik) · [2-4] Parrot section (@Erik)
-   [5-10] Environment (@Leo) · [11-12] Data & bias (@Maria)
-   [13-14] Harms (@Robin)  · [15] Paths forward (all, HTML table) */
+   [5-8] How parrots are born — 4 steps (@Erik)
+   [9-14] Environment (@Leo) · [15-16] Data & bias (@Maria)
+   [17-18] Harms (@Robin) · [19-20] Paths forward (all: table + FAQ) */
 function buildCharts() {
   return [
     { idx: 0, render: "bubbleChart", step: 2019 },
     { idx: 1, render: "bubbleChart", step: 2021 },
-    { idx: 2, render: "parrotChart", step: null },
-    { idx: 3, render: "autocompleteChart", step: null },
-    { idx: 4, render: "parrotChart", step: null },
-    { idx: 5, render: "envIntroChart", step: null },
-    { idx: 6, render: "computeChart", step: null },
-    { idx: 7, render: "co2Chart", step: null },
-    { idx: 8, render: "envLifecycleChart", step: null },
-    { idx: 9, render: "envTradeoffChart", step: null },
-    { idx: 10, render: "envJusticeChart", step: null },
-    { idx: 11, render: "whoChart", step: null },
-    { idx: 12, render: "filterChart", step: null },
-    { idx: 13, render: "caseCardsChart", step: null },
-    { idx: 14, render: "caseCardsChart", step: null },
-    { idx: 15, render: null, step: null }, // HTML comparison table, keep chart
+    { idx: 2, render: "parrotChart", step: 0 },
+    { idx: 3, render: "autocompleteChart", step: 1 },
+    { idx: 4, render: "parrotChart", step: 4 },
+    { idx: 5, render: "birthChart", step: 1 },
+    { idx: 6, render: "birthChart", step: 2 },
+    { idx: 7, render: "birthChart", step: 3 },
+    { idx: 8, render: "birthChart", step: 4 },
+    { idx: 9, render: "envIntroChart", step: null },
+    { idx: 10, render: "computeChart", step: null },
+    { idx: 11, render: "co2Chart", step: null },
+    { idx: 12, render: "envLifecycleChart", step: null },
+    { idx: 13, render: "envTradeoffChart", step: null },
+    { idx: 14, render: "envJusticeChart", step: null },
+    { idx: 15, render: "whoChart", step: 1 },
+    { idx: 16, render: "filterChart", step: 1 },
+    { idx: 17, render: "caseCardsChart", step: 1 },
+    { idx: 18, render: "caseCardsChart", step: 1 },
+    { idx: 19, render: "parrotChart", step: 5 },
+    { idx: 20, render: "faqChart", step: 1 },
   ];
 }
 
@@ -59,9 +65,18 @@ function init() {
   const chartMapping = buildCharts();
   let current = null;   // {render, instance}
 
+  function updateCarbonProgress() {
+    if (current?.render !== "co2Chart" || typeof current.instance.setProgress !== "function") return;
+    const chapter = chapters.find(element => element.classList.contains("carbon-scroll-chapter"));
+    if (!chapter) return;
+    const bounds = chapter.getBoundingClientRect();
+    const progress = (window.innerHeight * 0.55 - bounds.top) / bounds.height;
+    current.instance.setProgress(Math.max(0, Math.min(1, progress)));
+  }
+
   function show(entry) {
     if (current && current.render === entry.render) {
-      if (entry.step) current.instance.step(entry.step);
+      if (typeof current.instance.step === "function") current.instance.step(entry.step);
       return;
     }
     // teardown old chart, build new one
@@ -69,7 +84,8 @@ function init() {
     if (!factory) return;
     if (current && typeof current.instance.destroy === "function") current.instance.destroy();
     current = { render: entry.render, instance: factory(d3.select(stage)) };
-    if (entry.step) current.instance.step(entry.step);
+    if (typeof current.instance.step === "function") current.instance.step(entry.step);
+    updateCarbonProgress();
   }
 
   const scroller = scrollama();
@@ -103,6 +119,8 @@ function init() {
   });
 
   window.addEventListener("resize", scroller.resize);
+  window.addEventListener("scroll", updateCarbonProgress, { passive: true });
+  window.addEventListener("resize", updateCarbonProgress);
 
 }
 

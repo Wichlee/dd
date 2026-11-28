@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stochastic Parrots | How Big Is Too Big?</title>
   <meta name="description" content="An interactive scrollytelling about the dangers of ever larger language models, based on Bender, Gebru et al. (2021), 'On the Dangers of Stochastic Parrots'.">
-  <link rel="stylesheet" href="css/style.css?v=environment-overlap-fix-20261128">
+  <link rel="stylesheet" href="css/style.css?v=combined-main-environment-20261128">
   <link rel="stylesheet" href="css/environment-globe.css?v=environment-open-layout-20261128">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,6 +20,25 @@
       <p class="eyebrow">An interactive story based on the FAccT '21 paper<br>by Bender, Gebru, McMillan-Major &amp; Shmitchell</p>
       <h1>Stochastic Parrots</h1>
       <p class="subtitle">Language models sound shockingly human.<br>But do they <em>understand</em> a single word — and what does their sheer size cost us?</p>
+
+      <div class="hero-risks" role="list" aria-label="What is at stake">
+        <span class="hero-risks__head">What's at stake</span>
+        <div class="hero-risks__grid">
+          <div class="risk-card" role="listitem" style="--rc:#5c9dff">
+            <span class="risk-card__tag">Environment</span>
+            <p>One training run ≈ <strong>284&nbsp;t CO₂e</strong> — as much as 57 person-years of emissions.</p>
+          </div>
+          <div class="risk-card" role="listitem" style="--rc:#f0a35e">
+            <span class="risk-card__tag">Data &amp; bias</span>
+            <p>Models learn from an <strong>unrepresentative web</strong> — over 90% of the world's languages are left out.</p>
+          </div>
+          <div class="risk-card" role="listitem" style="--rc:#f05c7a">
+            <span class="risk-card__tag">Harms</span>
+            <p>Fluent, <strong>meaningless</strong> text at scale: propaganda, misinformation, privacy leaks.</p>
+          </div>
+        </div>
+      </div>
+
       <p class="scroll-cue">scroll to begin ↓</p>
     </div>
   </header>
@@ -47,9 +66,9 @@
 
       <section class="chapter">
         <div class="chapter-content">
-          <h2>4,600× in two years</h2>
+          <h2>From millions to trillions</h2>
           <p>From BERT (340 million parameters) to GPT-3 (175&nbsp;billion) to Switch-C (1.6&nbsp;<strong>trillion</strong>).</p>
-          <p>For scale: the human brain has roughly 86&nbsp;billion neurons. GPT-3 alone has <strong>twice</strong> that many parameters.</p>
+          <p>That is roughly <strong>4,600×</strong> more parameters from BERT (2019) to Switch-C (2021).</p>
           <p class="hint">The chart uses a logarithmic scale — otherwise Switch-C would tower so high it would drown out everything else. That explosive leap <em>is</em> the story.</p>
         </div>
       </section>
@@ -81,6 +100,46 @@
           <p>So why does it <em>feel</em> like the machine understands? Because <strong>you</strong> supply the meaning.</p>
           <p>Humans are built to read intent into fluent language. The coherence is real — but it exists only in <strong>your head</strong>, not in the model.</p>
           <p>That gap is where the dangers of this technology begin.</p>
+        </div>
+      </section>
+
+      <!-- How parrots are born — 4-step pipeline (@Erik, inspired by the SaaS "How Parrots Are Born") -->
+      <section class="chapter">
+        <div class="chapter-content">
+          <p class="step-num">Step 1 of 4 · the data</p>
+          <h2>Collect the web</h2>
+          <p>First, gather the data. Large models are trained largely on <strong>Common Crawl</strong> — “petabytes of data collected over 8 years of web crawling”: blog posts, books, discussion forums.</p>
+          <p>Almost none of it is curated. Watch the egg ride the pipeline on the right — and see what hatches at the end.</p>
+          <p class="source">Bender et al. 2021, §4.1</p>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="chapter-content">
+          <p class="step-num">Step 2 of 4 · the task</p>
+          <h2>Train at scale</h2>
+          <p>Next, the model repeats one mechanical task, billions of times: <strong>predict the next word</strong>, given the words before it.</p>
+          <p>More parameters and more data sharpen the guesses — and run up the cost we saw in §3.</p>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="chapter-content">
+          <p class="step-num">Step 3 of 4 · the output</p>
+          <h2>Generate fluency</h2>
+          <p>What emerges is <em>ersatz fluency</em>: the model has learned the statistical shape of language — which words travel together — and its output reads smoothly.</p>
+          <p>The paper's definition: the model stitches together sequences “…without any reference to <strong>meaning</strong>”.</p>
+          <p class="source">Bender et al. 2021, §6.1</p>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="chapter-content">
+          <p class="step-num">Step 4 of 4 · the spark</p>
+          <h2>Impute understanding</h2>
+          <p>The final step is not the model's — it is <strong>ours</strong>. Humans habitually “impute meaning where there is none”, reading intent into fluent text.</p>
+          <p>That is what turns a stochastic parrot into something that <em>sounds</em> like an intelligence.</p>
+          <p class="source">Bender et al. 2021, §1</p>
         </div>
       </section>
 
@@ -214,6 +273,36 @@
         </div>
       </section>
 
+      <!-- S5 closing · FAQ · owners: ALL -->
+      <section class="chapter">
+        <div class="chapter-content wide">
+          <p class="step-num">the closing questions</p>
+          <h2>Questions the field must answer</h2>
+          <div class="faq">
+            <details class="faq-item" open>
+              <summary>Why “stochastic parrot”?</summary>
+              <p>An LM is a system “for haphazardly stitching together sequences of linguistic forms … according to probabilistic information about how they combine, but <strong>without any reference to meaning</strong>”. Fluent on the surface — the meaning is supplied by the reader.</p>
+              <p class="faq-src">Bender et al. 2021, §6.1</p>
+            </details>
+            <details class="faq-item">
+              <summary>Can't we just filter the bad data out?</summary>
+              <p>No — filtering does not clean the data, it silences people: “the current practice of filtering datasets can further <strong>attenuate the voices of people from marginalized identities</strong>.” The ~400-word list is mostly sexual terms, so communities that use reclaimed language lose their words first.</p>
+              <p class="faq-src">Bender et al. 2021, §5 &amp; §4.1</p>
+            </details>
+            <details class="faq-item">
+              <summary>Do we really need ever larger models?</summary>
+              <p>“It <strong>may seem</strong> like progress depends on the creation of ever larger language models” — but the paper invites us to ask whether they are inevitable or necessary, and whether beating benchmarks with ever more parameters “brings us any closer to long-term goals of general language understanding”.</p>
+              <p class="faq-src">Bender et al. 2021, §8 &amp; §5</p>
+            </details>
+            <details class="faq-item">
+              <summary>So should we stop building?</summary>
+              <p>The answer is not “stop” — it is <strong>redirect</strong>: report environmental and financial costs, curate and document datasets instead of ingesting everything, and fund research beyond ever larger models. The paper's phrase for that is part of the title of §7: “Paths Forward”.</p>
+              <p class="faq-src">Bender et al. 2021, §7</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
     </div>
   </main>
 
@@ -223,13 +312,15 @@
       <h2>Stochastic Parrots</h2>
       <p>is a student visualisation of the research paper</p>
       <p class="cite"><em>Bender, E. M., Gebru, T., McMillan-Major, A., &amp; Shmitchell, S. (2021). On the Dangers of Stochastic Parrots: Can Language Models Be Too Big? Proceedings of the 2021 ACM Conference on Fairness, Accountability, and Transparency (FAccT '21), 610–623.</em></p>
-      <p class="disclaimer">Made for a Digital Democracy seminar. A general-audience retelling — for the full academic argument, see the original paper.</p>
+      <p class="cta-row"><a class="cta-btn" href="https://doi.org/10.1145/3442188.3445922" target="_blank" rel="noopener">Read the full paper ↗</a></p>
+      <p class="disclaimer">Parrot artwork: <a href="https://openmoji.org" style="color:inherit">OpenMoji</a> (CC BY-SA 4.0). Made for a Digital Democracy seminar. A general-audience retelling — for the full academic argument, see the original paper.</p>
     </div>
   </footer>
 
   <script src="js/data.js"></script>
+  <script src="js/parrot-art.js"></script>
   <script src="js/environment-globe.js"></script>
-  <script src="js/charts.js?v=environment-scroll-pinning-20261128"></script>
-  <script src="js/main.js"></script>
+  <script src="js/charts.js?v=combined-main-environment-20261128"></script>
+  <script src="js/main.js?v=combined-main-environment-20261128"></script>
 </body>
 </html>
